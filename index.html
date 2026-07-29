@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>StudySpace Tasks</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --p: #1d61e7; --p-hover: #154ec2; --p-soft: #edf3ff;
+  --bg: #f4f6fb; --card: #ffffff; --txt: #0f172a; --mut: #64748b;
+  --ok: #10b981; --ok-soft: #d1fae5; --warn: #f59e0b; --warn-soft: #fef3c7;
+  --red: #ef4444; --red-soft: #fee2e2;
+  --border-radius: 20px;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  --shadow-hover: 0 15px 35px rgba(29, 97, 231, 0.12);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--txt); -webkit-font-smoothing: antialiased; }
+.hidden { display: none !important; }
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+input { font-family: inherit; }
+.wrap { max-width: 480px; margin: 0 auto; padding: 16px 16px 120px; min-height: 100vh; }
+.view { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.top-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.user-profile { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.app-brand { font-size: 1.25rem; font-weight: 800; color: var(--p); letter-spacing: -0.02em; }
+.settings-btn { width: 36px; height: 36px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; color: var(--p); box-shadow: var(--shadow); transition: transform 0.2s; }
+.settings-btn:active { transform: scale(0.9); }
+.eyebrow { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; color: var(--p); text-transform: uppercase; margin-bottom: 4px; }
+h2.big { font-size: 1.5rem; font-weight: 800; color: var(--txt); margin-bottom: 18px; letter-spacing: -0.02em; }
+.card { background: var(--card); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; transition: transform 0.2s, box-shadow 0.2s; }
+.row { display: flex; gap: 14px; margin-bottom: 16px; }
+.row .card { flex: 1; margin-bottom: 0; }
+.ring-card { display: flex; flex-direction: column; align-items: center; padding: 24px 20px; text-align: center; }
+.ring { position: relative; width: 140px; height: 140px; }
+.ring svg { transform: rotate(-90deg); }
+.ring .pct { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 800; color: var(--txt); }
+.ring .pct span { font-size: 0.75rem; color: var(--mut); font-weight: 600; text-transform: uppercase; }
+.ring-label { color: var(--mut); font-size: 0.88rem; font-weight: 600; margin-top: 12px; }
+.card-blue { background: linear-gradient(135deg, #1d61e7 0%, #154ec2 100%); color: #fff; position: relative; overflow: hidden; }
+.card-blue .mini-title { color: #fff; font-size: 1.1rem; }
+.card-blue .mini-sub { color: rgba(255,255,255,0.8); }
+.xp-tag { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 800; }
+.t-item { display: flex; align-items: center; gap: 14px; background: var(--card); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; border-left: 5px solid transparent; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.t-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.t-item.cat-chores { border-left-color: var(--ok); }
+.t-item.cat-study { border-left-color: var(--warn); }
+.t-item.cat-shopping { border-left-color: var(--p); }
+.chk { width: 26px; height: 26px; min-width: 26px; border-radius: 9px; border: 2px solid #cbd5e1; background: #fff; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; font-weight: 800; transition: all 0.2s; }
+.chk:active { transform: scale(0.85); }
+.t-item.done .chk { background: var(--ok); border-color: var(--ok); animation: checkPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes checkPop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+.t-item.done .t-title { text-decoration: line-through; color: var(--mut); }
+.t-body { flex: 1; min-width: 0; cursor: pointer; }
+.t-title { font-weight: 700; font-size: 0.98rem; color: var(--txt); margin-bottom: 2px; }
+.t-meta { font-size: 0.78rem; color: var(--mut); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.badge { font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; }
+.badge.urgent { background: var(--red-soft); color: var(--red); }
+.badge.routine { background: var(--ok-soft); color: var(--ok); }
+.del { background: none; color: #cbd5e1; font-size: 1.1rem; padding: 6px; border-radius: 8px; transition: all 0.2s; }
+.del:hover { color: var(--red); background: var(--red-soft); }
+.sec-title { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 12px; }
+.sec-title h3 { font-size: 1.05rem; font-weight: 800; color: var(--txt); }
+.count { background: var(--p-soft); color: var(--p); font-weight: 800; font-size: 0.75rem; padding: 3px 10px; border-radius: 99px; }
+.empty { color: var(--mut); font-size: 0.9rem; text-align: center; padding: 30px 0; font-weight: 500; }
+.field { display: block; width: 100%; padding: 14px 16px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 0.95rem; margin-bottom: 14px; outline: none; background: #fff; transition: border 0.2s, box-shadow 0.2s; }
+.field:focus { border-color: var(--p); box-shadow: 0 0 0 4px rgba(29, 97, 231, 0.1); }
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 1rem; transition: transform 0.15s, background 0.2s; }
+.btn:active { transform: scale(0.98); }
+.btn-p { background: var(--p); color: #fff; box-shadow: 0 8px 20px rgba(29, 97, 231, 0.3); }
+.btn-p:hover { background: var(--p-hover); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 16px; }
+.chip { padding: 10px 16px; border-radius: 12px; background: #edf2f7; color: var(--mut); font-weight: 700; font-size: 0.85rem; border: 2px solid transparent; transition: all 0.2s; }
+.chip.on { background: var(--p-soft); color: var(--p); border-color: var(--p); }
+#rec-urgent-chip.on, #modal-urgent-chip.on { background: var(--red-soft); color: var(--red); border-color: var(--red); }
+.days-picker { display: flex; justify-content: space-between; gap: 4px; margin: 12px 0 20px; }
+.day-circle { width: 42px; height: 42px; border-radius: 50%; background: #edf2f7; color: var(--mut); font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.day-circle.on { background: var(--p); color: #fff; box-shadow: 0 4px 12px rgba(29, 97, 231, 0.3); }
+nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid #eef2f7; display: flex; justify-content: space-around; padding: 10px 16px max(14px, env(safe-area-inset-bottom)); z-index: 20; }
+.nav-btn { background: none; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--mut); font-size: 0.7rem; font-weight: 700; padding: 6px 16px; border-radius: 16px; transition: all 0.2s; }
+.nav-btn svg { width: 22px; height: 22px; fill: currentColor; }
+.nav-btn.active { color: var(--p); background: var(--p-soft); }
+#fab { position: fixed; right: calc(50% - 240px + 20px); bottom: 90px; width: 60px; height: 60px; border-radius: 50%; background: var(--p); color: #fff; font-size: 2rem; box-shadow: 0 10px 25px rgba(29, 97, 231, 0.4); z-index: 21; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+#fab:active { transform: scale(0.9); }
+@media (max-width: 512px) { #fab { right: 20px; } }
+.overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: flex-end; justify-content: center; z-index: 50; animation: fadeIn 0.2s ease; }
+.sheet { background: #fff; width: 100%; max-width: 480px; border-radius: 28px 28px 0 0; padding: 24px 20px 36px; animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto; }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.sheet-head h3 { font-size: 1.25rem; font-weight: 800; }
+.x { background: #f1f5f9; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; color: var(--mut); display: flex; align-items: center; justify-content: center; }
+.ai-box { background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); border: 1.5px dashed #bfdbfe; border-radius: 16px; padding: 14px; margin-bottom: 24px; }
+.ai-box .lbl { font-size: 0.8rem; font-weight: 800; color: var(--p); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.ai-row { display: flex; gap: 8px; }
+.ai-row input { flex: 1; margin: 0; border-color: #bfdbfe; font-size: 0.9rem; }
+.ai-row button { background: var(--p); color: #fff; border-radius: 12px; padding: 0 18px; font-weight: 800; }
+.ai-hints { font-size: 0.72rem; color: #64748b; margin-top: 8px; text-align: center; }
+#toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #0f172a; color: #fff; padding: 12px 22px; border-radius: 99px; font-size: 0.88rem; font-weight: 600; z-index: 99; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#auth { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(160deg, #1d61e7 0%, #154ec2 60%, #0f172a 100%); }
+.auth-card { background: #fff; border-radius: 28px; padding: 36px 28px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); text-align: center; }
+.auth-card h1 { font-size: 1.8rem; font-weight: 800; color: var(--txt); margin-bottom: 8px; }
+.auth-card p { color: var(--mut); font-size: 0.9rem; margin-bottom: 24px; }
+</style>
+</head>
+<body>
+
+<div id="auth">
+  <div class="auth-card">
+    <h1>StudySpace</h1>
+    <p>Gérez vos cours, corvées et objectifs quotidiens en toute simplicité.</p>
+    <input id="email" class="field" type="email" placeholder="Adresse email">
+    <input id="password" class="field" type="password" placeholder="Mot de passe">
+    <button id="btn-login" class="btn btn-p">Se connecter</button>
+    <button id="btn-signup" class="btn" style="background:#f1f5f9; color:var(--txt); margin-top:10px;">Créer un compte</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="wrap">
+
+    <div class="top-nav">
+      <div class="user-profile">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256" class="avatar" alt="User Avatar">
+        <div class="app-brand">StudySpace</div>
+      </div>
+      <button class="settings-btn" id="btn-settings-icon">⚙️</button>
+    </div>
+
+    <!-- Dashboard -->
+    <section id="view-dashboard" class="view">
+      <h2 class="big" id="greeting" style="margin-bottom:12px;">Bon retour !</h2>
+
+      <div class="ai-box">
+        <div class="lbl">🤖 Assistant IA Interactif</div>
+        <div class="ai-row">
+          <input id="ai-input" class="field" placeholder="Ex: Met tennis en urgent ou enlève l'urgence...">
+          <button id="btn-ai">➤</button>
+        </div>
+        <div class="ai-hints">Ajoutez, décalez, gérez l'urgence ou validez vos tâches.</div>
+      </div>
+
+      <div class="card ring-card">
+        <div class="ring">
+          <svg width="140" height="140">
+            <circle cx="70" cy="70" r="58" stroke="#edf3ff" stroke-width="14" fill="none"/>
+            <circle id="ring-bar" cx="70" cy="70" r="58" stroke="#10b981" stroke-width="14" fill="none"
+              stroke-linecap="round" stroke-dasharray="364" stroke-dashoffset="364" style="transition: stroke-dashoffset 0.8s ease;"/>
+          </svg>
+          <div class="pct"><span id="pct-val">0%</span><span>Fait</span></div>
+        </div>
+        <div class="ring-label" id="ring-label">0 sur 0 tâches accomplies</div>
+      </div>
+
+      <div class="sec-title"><h3>À faire aujourd'hui</h3><span class="count" id="today-count">0</span></div>
+      <div id="today-list"></div>
+
+      <div class="sec-title"><h3>À venir</h3><span class="count" id="upcoming-count">0</span></div>
+      <div id="upcoming-list"></div>
+
+      <div class="sec-title"><h3>Corvées de la semaine 🗓️</h3><span class="count" id="week-goal">0/0</span></div>
+      <div id="week-list"></div>
+    </section>
+
+    <!-- Tâches -->
+    <section id="view-tasks" class="view hidden">
+      <div class="eyebrow" id="date-line">...</div>
+      <h2 class="big" id="tasks-headline">Vous avez 0 tâche aujourd'hui</h2>
+      <div id="tasks-groups"></div>
+    </section>
+
+    <!-- Récurrences -->
+    <section id="view-recurring" class="view hidden">
+      <div class="eyebrow">Planning Automatique</div>
+      <h2 class="big">Corvées récurrentes</h2>
+      
+      <div class="card">
+        <label class="eyebrow" style="margin-bottom:8px; display:block;">✦ Choix de la corvée</label>
+        <input id="rec-name" class="field" placeholder="Ex : Sortir les poubelles, Arroser les plantes">
+        
+        <label class="eyebrow" style="margin-bottom:8px; display:block;">Catégorie</label>
+        <div class="chips" id="rec-cat-chips">
+          <button class="chip on" data-cat="chores">🧹 Maison</button>
+          <button class="chip" data-cat="shopping">🛒 Shopping</button>
+          <button class="chip" data-cat="study">📚 Études</button>
+        </div>
+
+        <label class="eyebrow" style="margin-bottom:8px; display:block;">🕘 Horaire préféré</label>
+        <input id="rec-time" class="field" type="time" value="09:00">
+        
+        <label class="eyebrow" style="margin-bottom:8px; display:block;">Jours spécifiques</label>
+        <div class="days-picker" id="rec-days">
+          <button class="day-circle" data-dow="0">S</button>
+          <button class="day-circle" data-dow="1">M</button>
+          <button class="day-circle" data-dow="2">T</button>
+          <button class="day-circle" data-dow="3">W</button>
+          <button class="day-circle" data-dow="4">T</button>
+          <button class="day-circle" data-dow="5">F</button>
+          <button class="day-circle" data-dow="6">S</button>
+        </div>
+
+        <label class="eyebrow" style="margin-bottom:8px; display:block;">Urgence</label>
+        <div class="chips"><button class="chip" id="rec-urgent-chip">🔥 Urgence haute</button></div>
+
+        <button id="btn-rec" class="btn btn-p" style="margin-top:6px;">Sauvegarder la récurrence</button>
+      </div>
+
+      <div class="sec-title"><h3>Récurrences actives</h3></div>
+      <div id="rec-list"></div>
+    </section>
+
+    <!-- Profil -->
+    <section id="view-profile" class="view hidden">
+      <div class="eyebrow">Compte</div>
+      <h2 class="big">Profil Utilisateur</h2>
+      <div class="card">
+        <div style="font-weight:800; font-size:1.1rem; margin-bottom:4px;" id="profile-email">utilisateur@exple.com</div>
+        <div style="color:var(--mut); font-size:0.85rem;">Données synchronisées en temps réel sur le Cloud.</div>
+      </div>
+      <button id="btn-logout" class="btn" style="background:var(--red-soft); color:var(--red);">Se déconnecter</button>
+    </section>
+
+  </div>
+
+  <button id="fab">＋</button>
+
+  <nav>
+    <button class="nav-btn active" data-view="dashboard">
+      <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg> Accueil
+    </button>
+    <button class="nav-btn" data-view="tasks">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Tâches
+    </button>
+    <button class="nav-btn" data-view="recurring">
+      <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> Routine
+    </button>
+    <button class="nav-btn" data-view="profile">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> Profil
+    </button>
+  </nav>
+</div>
+
+<!-- Modal Ajout / Modification Manuelle -->
+<div id="modal" class="overlay hidden">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h3 id="modal-title">Nouvelle tâche</h3>
+      <button class="x" id="modal-close">✕</button>
+    </div>
+
+    <label class="eyebrow">Intitulé de la tâche</label>
+    <input id="task-title" class="field" placeholder="Ex: Nettoyer le bureau">
+
+    <label class="eyebrow">Catégorie</label>
+    <div class="chips" id="cat-chips">
+      <button class="chip on" data-cat="chores">🧹 Maison</button>
+      <button class="chip" data-cat="shopping">🛒 Shopping</button>
+      <button class="chip" data-cat="study">📚 Études</button>
+    </div>
+
+    <!-- Section Échéance (uniquement pour les tâches normales) -->
+    <div id="modal-echeance-wrap">
+      <label class="eyebrow">Échéance</label>
+      <div class="chips" id="day-chips">
+        <button class="chip on" data-day="today">📅 Aujourd'hui</button>
+        <button class="chip" data-day="tomorrow">📆 Demain</button>
+        <button class="chip" data-day="custom">🗓️ Date précise</button>
+      </div>
+      <input id="task-custom-date" class="field hidden" type="date" style="margin-top: -6px;">
+    </div>
+
+    <!-- Section Jours spécifiques (uniquement pour les routines) -->
+    <div id="modal-routine-days-wrap" class="hidden">
+      <label class="eyebrow" style="margin-bottom:8px; display:block;">Jours spécifiques</label>
+      <div class="days-picker" id="modal-rec-days">
+        <button class="day-circle" data-dow="0">S</button>
+        <button class="day-circle" data-dow="1">M</button>
+        <button class="day-circle" data-dow="2">T</button>
+        <button class="day-circle" data-dow="3">W</button>
+        <button class="day-circle" data-dow="4">T</button>
+        <button class="day-circle" data-dow="5">F</button>
+        <button class="day-circle" data-dow="6">S</button>
+      </div>
+    </div>
+
+    <label class="eyebrow">Horaire (optionnel)</label>
+    <input id="task-time" class="field" type="time">
+
+    <div class="chips"><button class="chip" id="modal-urgent-chip">🔥 Urgence haute</button></div>
+
+    <button id="btn-add" class="btn btn-p" style="margin-top:12px;">Ajouter la tâche →</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://ffzuyosxqiybkfvvoxjc.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmenV5b3N4cWl5YmtmdnZveGpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzMjUxMDYsImV4cCI6MjEwMDkwMTEwNn0.fgfcskzYD17Jno0338GBRHpIZGV03UILEo94i0WXjFA";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] || c));
+
+const localISO = d => d.toLocaleDateString('fr-CA');
+const todayISO = () => localISO(new Date());
+const tomorrowISO = () => { const d = new Date(); d.setDate(d.getDate()+1); return localISO(d); };
+
+const DAYS_SHORT = ['S','M','T','W','T','F','S'];
+const DAYS_FULL = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const CATS = { chores: '🧹 Maison', shopping: '🛒 Shopping', study: '📚 Études' };
+
+let session = null, tasks = [], channel = null, busy = false;
+let editingTaskId = null;
+let modalEditingRoutine = false;
+const modalState = { category: 'chores', day: 'today', urgent: false };
+const modalRecDays = new Set();
+const recDays = new Set();
+let recCategory = 'chores';
+let recUrgent = false;
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function parseDays(input) {
+  if (!input) return [];
+  const arr = Array.isArray(input) ? input : [input];
+  const res = new Set();
+  arr.forEach(v => {
+    if (typeof v === 'number' && !isNaN(v) && v >= 0 && v <= 6) res.add(v);
+  });
+  return Array.from(res).sort();
+}
+
+function parseDaysFromText(textLower) {
+  let days = [];
+  const hasEvery = /tou[ts]? les jours?|chaque jour|quotidien/i.test(textLower);
+  
+  if (hasEvery) {
+    days = [0, 1, 2, 3, 4, 5, 6];
+  } else {
+    if (/dimanche|dim\b|sun/i.test(textLower)) days.push(0);
+    if (/lundi|lun\b|mon/i.test(textLower)) days.push(1);
+    if (/mardi|mar\b|tue/i.test(textLower)) days.push(2);
+    if (/mercredi|mer\b|wed/i.test(textLower)) days.push(3);
+    if (/jeudi|jeu\b|thu/i.test(textLower)) days.push(4);
+    if (/vendredi|ven\b|fri/i.test(textLower)) days.push(5);
+    if (/samedi|sam\b|sat/i.test(textLower)) days.push(6);
+  }
+
+  if (/sauf|excepté|hors/i.test(textLower)) {
+    if (!hasEvery) days = [0, 1, 2, 3, 4, 5, 6];
+    const excludeDays = [];
+    const parts = textLower.split(/sauf|excepté|hors/);
+    if (parts.length > 1) {
+      const exclusionPart = parts[1];
+      if (/dimanche|dim\b|sun/i.test(exclusionPart)) excludeDays.push(0);
+      if (/lundi|lun\b|mon/i.test(exclusionPart)) excludeDays.push(1);
+      if (/mardi|mar\b|tue/i.test(exclusionPart)) excludeDays.push(2);
+      if (/mercredi|mer\b|wed/i.test(exclusionPart)) excludeDays.push(3);
+      if (/jeudi|jeu\b|thu/i.test(exclusionPart)) excludeDays.push(4);
+      if (/vendredi|ven\b|fri/i.test(exclusionPart)) excludeDays.push(5);
+      if (/samedi|sam\b|sat/i.test(exclusionPart)) excludeDays.push(6);
+    }
+    days = days.filter(d => !excludeDays.includes(d));
+  }
+
+  return Array.from(new Set(days)).sort();
+}
+
+function parseCategoryFromText(textLower) {
+  if (/maison|ménage|corvée|nettoi|chores/i.test(textLower)) return 'chores';
+  if (/shopping|course|courses|achat/i.test(textLower)) return 'shopping';
+  if (/étude|études|cours|devoir|travail|study/i.test(textLower)) return 'study';
+  return null;
+}
+
+function parseTargetDate(textLower) {
+  if (/aujourd['\s]?hui/i.test(textLower)) {
+    return todayISO();
+  }
+  if (/demain/i.test(textLower)) {
+    return tomorrowISO();
+  }
+  const dateMatch = textLower.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (dateMatch) {
+    const day = dateMatch[1].padStart(2, '0');
+    const month = dateMatch[2].padStart(2, '0');
+    const year = dateMatch[3];
+    return `${year}-${month}-${day}`;
+  }
+  const shortDateMatch = textLower.match(/(\d{1,2})[\/\-](\d{1,2})(?!\/\d)/);
+  if (shortDateMatch) {
+    const day = shortDateMatch[1].padStart(2, '0');
+    const month = shortDateMatch[2].padStart(2, '0');
+    const year = new Date().getFullYear();
+    return `${year}-${month}-${day}`;
+  }
+  return null;
+}
+
+function getRecDays(t) {
+  if (!t || !t.recurring_days) return [];
+  let raw = t.recurring_days;
+  if (typeof raw === 'string') {
+    try { raw = JSON.parse(raw.replace(/\{/g, '[').replace(/\}/g, ']')); } catch(e) { raw = raw.replace(/[{}]/g, '').split(','); }
+  }
+  return parseDays(raw);
+}
+
+const isTemplate = t => getRecDays(t).length > 0;
+const dayTasks = iso => tasks.filter(t => !isTemplate(t) && t.due_date === iso);
+
+/* ================= AUTHENTIFICATION ================= */
+$('#btn-login').onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $('#email').value.trim(), password: $('#password').value });
+  if (error) toast('Erreur: ' + error.message);
+};
+$('#btn-signup').onclick = async () => {
+  const { error } = await sb.auth.signUp({ email: $('#email').value.trim(), password: $('#password').value });
+  if (error) toast(error.message); else toast('Compte créé !');
+};
+$('#btn-logout').onclick = () => sb.auth.signOut();
+$('#btn-settings-icon').onclick = () => switchView('profile');
+
+sb.auth.onAuthStateChange((_e, s) => {
+  session = s; if (s) startApp(); else stopApp();
+});
+
+function stopApp() {
+  $('#app').classList.add('hidden'); $('#auth').classList.remove('hidden');
+  if (channel) { sb.removeChannel(channel); channel = null; }
+  tasks = [];
+}
+
+async function startApp() {
+  $('#auth').classList.add('hidden'); $('#app').classList.remove('hidden');
+  $('#profile-email').textContent = session.user.email;
+  await refresh(true);
+  if (channel) sb.removeChannel(channel);
+  channel = sb.channel('tasks-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `user_id=eq.${session.user.id}` }, () => refresh(false)).subscribe();
+}
+
+async function loadTasks() {
+  const { data, error } = await sb.from('tasks').select('*').order('due_date', { ascending: true, nullsFirst: false }).order('due_time', { ascending: true, nullsFirst: false });
+  if (!error) tasks = data || [];
+}
+
+async function materializeRecurring() {
+  const today = todayISO(), dow = new Date().getDay();
+  const inserts = tasks
+    .filter(t => isTemplate(t) && getRecDays(t).includes(dow))
+    .filter(t => !tasks.some(x => x.parent_id === t.id && x.due_date === today))
+    .map(t => ({ user_id: session.user.id, title: t.title, category: t.category, due_date: today, due_time: t.due_time, urgent: t.urgent, parent_id: t.id }));
+  if (inserts.length) await sb.from('tasks').insert(inserts);
+  return inserts.length > 0;
+}
+
+async function refresh(materialize) {
+  if (busy) return; busy = true;
+  try {
+    await loadTasks();
+    if (materialize && await materializeRecurring()) await loadTasks();
+    renderAll();
+  } finally { busy = false; }
+}
+
+function taskHTML(t) {
+  const catClass = 'cat-' + (t.category || 'chores');
+  let dateInfo = '';
+  if (t.isUpcoming || (t.isWeek && t.due_date !== todayISO())) {
+     const d = new Date(t.due_date); dateInfo = ` • 📅 ${d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })}`;
+  } else if (t.isToday || (t.isWeek && t.due_date === todayISO())) {
+     dateInfo = ` • 📅 Auj.`;
+  }
+
+  return `
+  <div class="t-item ${catClass} ${t.done ? 'done' : ''}">
+    <button class="chk" data-toggle="${t.id}">${t.done ? '✓' : ''}</button>
+    <div class="t-body" data-edit="${t.id}" title="Cliquez pour modifier">
+      <div class="t-title">${esc(t.title)}</div>
+      <div class="t-meta">
+        <span>${CATS[t.category] || t.category}</span>
+        ${t.due_time ? ' • 🕘 ' + t.due_time.slice(0,5) : ''}
+        ${dateInfo}
+      </div>
+    </div>
+    ${t.urgent ? '<span class="badge urgent">🔥 Urgent</span>' : (t.parent_id ? '<span class="badge routine">Routine</span>' : '')}
+    <button class="del" data-del="${t.id}">🗑</button>
+  </div>`;
+}
+
+function renderAll() {
+  const today = todayISO();
+  const list = dayTasks(today);
+  const done = list.filter(t => t.done).length;
+  const pct = list.length ? Math.round((done / list.length) * 100) : 0;
+
+  $('#pct-val').textContent = pct + '%';
+  $('#ring-bar').style.strokeDashoffset = 364 - (364 * pct) / 100;
+  $('#ring-label').textContent = `${done} sur ${list.length} tâches accomplies`;
+  $('#greeting').textContent = pct === 100 && list.length ? 'Journée terminée ! 🎉' : 'Bon retour !';
+
+  const todayPending = list.filter(t => !t.done);
+  $('#today-count').textContent = todayPending.length;
+  $('#today-list').innerHTML = todayPending.slice(0, 4).map(t => taskHTML({...t, isToday: true})).join('') || '<div class="empty">Tout est fait pour aujourd\'hui ! 🎉</div>';
+
+  const upcoming = tasks.filter(t => !isTemplate(t) && !t.done && t.due_date > today).slice(0, 3);
+  $('#upcoming-count').textContent = upcoming.length;
+  $('#upcoming-list').innerHTML = upcoming.map(t => taskHTML({...t, isUpcoming: true})).join('') || '<div class="empty">Rien de prévu prochainement. ☀️</div>';
+
+  const mon = new Date(); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  const week = tasks.filter(t => !isTemplate(t) && t.category === 'chores' && t.due_date >= localISO(mon) && t.due_date <= localISO(sun));
+  $('#week-goal').textContent = `${week.filter(t => t.done).length}/${week.length}`;
+  $('#week-list').innerHTML = week.map(t => taskHTML({...t, isWeek: true})).join('') || '<div class="empty">Pas de corvée programmée.</div>';
+
+  $('#date-line').textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const active = list.filter(t => !t.done).length;
+  $('#tasks-headline').textContent = `Vous avez ${active} tâche${active > 1 ? 's' : ''} aujourd'hui`;
+  $('#tasks-groups').innerHTML = Object.keys(CATS).map(cat => {
+    const items = list.filter(t => t.category === cat);
+    return `<div class="sec-title"><h3>${CATS[cat]}</h3><span class="count">${items.length}</span></div>` + (items.map(t => taskHTML({...t, isToday: true})).join('') || '<div class="empty">—</div>');
+  }).join('');
+
+  const templates = tasks.filter(isTemplate);
+  $('#rec-list').innerHTML = templates.map(t => {
+    const rDays = getRecDays(t);
+    return `
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between;">
+      <div class="t-body" data-edit="${t.id}" style="cursor:pointer" title="Cliquez pour modifier">
+        <div style="font-weight:800; font-size:1rem; display:flex; align-items:center; gap:8px;">
+          🔁 ${esc(t.title)} ${t.urgent ? '<span class="badge urgent">🔥 Urgent</span>' : ''}
+        </div>
+        <div style="color:var(--p); font-size:0.82rem; font-weight:700; margin-top:4px;">
+          ${CATS[t.category] || t.category} • ${rDays.map(d => DAYS_FULL[d]).join(', ')} ${t.due_time ? 'à ' + t.due_time.slice(0,5) : ''}
+        </div>
+      </div>
+      <button class="del" data-del="${t.id}">🗑</button>
+    </div>`
+  }).join('') || '<div class="empty">Aucune récurrence active.</div>';
+}
+
+document.body.addEventListener('click', async e => {
+  const tog = e.target.closest('[data-toggle]');
+  if (tog) {
+    const t = tasks.find(x => x.id === tog.dataset.toggle);
+    t.done = !t.done; renderAll();
+    const { error } = await sb.from('tasks').update({ done: t.done }).eq('id', t.id);
+    if (error) { t.done = !t.done; renderAll(); toast(error.message); }
+    return;
+  }
+  
+  const del = e.target.closest('[data-del]');
+  if (del) {
+    const { error } = await sb.from('tasks').delete().eq('id', del.dataset.del);
+    if (error) toast(error.message); else refresh(false);
+    return;
+  }
+
+  const edit = e.target.closest('[data-edit]');
+  if (edit && !e.target.closest('button')) {
+    openModal(edit.dataset.edit);
+  }
+});
+
+function switchView(viewName) {
+  $$('.view').forEach(v => v.classList.add('hidden'));
+  $('#view-' + viewName).classList.remove('hidden');
+  $$('.nav-btn').forEach(x => x.classList.toggle('active', x.dataset.view === viewName));
+}
+$$('.nav-btn').forEach(b => b.onclick = () => switchView(b.dataset.view));
+$('#fab').onclick = () => openModal(null);
+$('#modal-close').onclick = closeModal;
+$('#modal').onclick = e => { if (e.target.id === 'modal') closeModal(); };
+
+function openModal(taskId = null) {
+  editingTaskId = taskId;
+  $('#modal').classList.remove('hidden');
+  
+  const today = todayISO();
+  const tomorrow = tomorrowISO();
+
+  if (taskId) {
+    const t = tasks.find(x => x.id === taskId);
+    modalEditingRoutine = isTemplate(t);
+    
+    $('#task-title').value = t.title || '';
+    $('#task-time').value = t.due_time ? t.due_time.slice(0,5) : '';
+    
+    modalState.category = t.category || 'chores';
+    $$('#cat-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.cat === modalState.category));
+    modalState.urgent = !!t.urgent;
+    $('#modal-urgent-chip').classList.toggle('on', modalState.urgent);
+
+    if (modalEditingRoutine) {
+      $('#modal-title').textContent = 'Modifier la routine';
+      $('#btn-add').textContent = 'Mettre à jour ✏️';
+      $('#modal-echeance-wrap').classList.add('hidden');
+      $('#modal-routine-days-wrap').classList.remove('hidden');
+      
+      modalRecDays.clear();
+      getRecDays(t).forEach(d => modalRecDays.add(d));
+      $$('#modal-rec-days .day-circle').forEach(c => {
+        const dow = +c.dataset.dow;
+        c.classList.toggle('on', modalRecDays.has(dow));
+      });
+    } else {
+      $('#modal-title').textContent = 'Modifier la tâche';
+      $('#btn-add').textContent = 'Mettre à jour ✏️';
+      $('#modal-echeance-wrap').classList.remove('hidden');
+      $('#modal-routine-days-wrap').classList.add('hidden');
+
+      if (t.due_date === today) {
+        modalState.day = 'today';
+        $('#task-custom-date').classList.add('hidden');
+      } else if (t.due_date === tomorrow) {
+        modalState.day = 'tomorrow';
+        $('#task-custom-date').classList.add('hidden');
+      } else if (t.due_date) {
+        modalState.day = 'custom';
+        $('#task-custom-date').value = t.due_date;
+        $('#task-custom-date').classList.remove('hidden');
+      } else {
+        modalState.day = 'today';
+        $('#task-custom-date').classList.add('hidden');
+      }
+      $$('#day-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.day === modalState.day));
+    }
+  } else {
+    modalEditingRoutine = false;
+    $('#modal-title').textContent = 'Nouvelle tâche';
+    $('#btn-add').textContent = 'Ajouter la tâche →';
+    $('#modal-echeance-wrap').classList.remove('hidden');
+    $('#modal-routine-days-wrap').classList.add('hidden');
+    $('#task-title').value = '';
+    $('#task-time').value = '';
+    $('#task-custom-date').value = today;
+    $('#task-custom-date').classList.add('hidden');
+    modalState.category = 'chores'; modalState.day = 'today'; modalState.urgent = false;
+    $$('#cat-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.cat === 'chores'));
+    $$('#day-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.day === 'today'));
+    $('#modal-urgent-chip').classList.remove('on');
+  }
+}
+
+function closeModal() {
+  $('#modal').classList.add('hidden');
+  editingTaskId = null;
+  modalEditingRoutine = false;
+}
+
+$('#cat-chips').onclick = e => {
+  const c = e.target.closest('[data-cat]'); if (!c) return;
+  modalState.category = c.dataset.cat;
+  $$('#cat-chips .chip').forEach(x => x.classList.toggle('on', x === c));
+};
+
+$('#day-chips').onclick = e => {
+  const c = e.target.closest('[data-day]'); if (!c) return;
+  modalState.day = c.dataset.day;
+  $$('#day-chips .chip').forEach(x => x.classList.toggle('on', x === c));
+  
+  if (modalState.day === 'custom') {
+    $('#task-custom-date').classList.remove('hidden');
+    if (!$('#task-custom-date').value) {
+      $('#task-custom-date').value = todayISO();
+    }
+    $('#task-custom-date').focus();
+  } else {
+    $('#task-custom-date').classList.add('hidden');
+  }
+};
+
+$('#modal-rec-days').onclick = e => {
+  const c = e.target.closest('[data-dow]'); if (!c) return;
+  const d = +c.dataset.dow;
+  modalRecDays.has(d) ? modalRecDays.delete(d) : modalRecDays.add(d);
+  c.classList.toggle('on', modalRecDays.has(d));
+};
+
+$('#modal-urgent-chip').onclick = e => {
+  modalState.urgent = !modalState.urgent; e.target.classList.toggle('on', modalState.urgent);
+};
+
+$('#btn-add').onclick = async () => {
+  const title = $('#task-title').value.trim();
+  if (!title) return toast('Le titre de la tâche est requis.');
+  
+  const payload = {
+    title,
+    category: modalState.category,
+    urgent: modalState.urgent,
+    due_time: $('#task-time').value || null
+  };
+
+  if (modalEditingRoutine) {
+    if (!modalRecDays.size) return toast('Sélectionnez au moins un jour.');
+    payload.recurring_days = Array.from(modalRecDays).sort();
+    payload.due_date = null;
+  } else {
+    let due_date = todayISO();
+    if (modalState.day === 'tomorrow') {
+      due_date = tomorrowISO();
+    } else if (modalState.day === 'custom') {
+      due_date = $('#task-custom-date').value || todayISO();
+    }
+    payload.due_date = due_date;
+  }
+
+  if (editingTaskId) {
+    const { error } = await sb.from('tasks').update(payload).eq('id', editingTaskId);
+    if (error) return toast(error.message);
+    toast(modalEditingRoutine ? 'Routine modifiée avec succès ! ✏️' : 'Tâche modifiée avec succès ! ✏️');
+  } else {
+    payload.user_id = session.user.id;
+    const { error } = await sb.from('tasks').insert(payload);
+    if (error) return toast(error.message);
+    toast('Tâche ajoutée avec succès ! ✅');
+  }
+  
+  closeModal(); refresh(false);
+};
+
+/* =================================================================
+   ASSISTANT IA
+   ================================================================= */
+$('#btn-ai').onclick = async () => {
+  const text = $('#ai-input').value.trim();
+  if (!text) return toast('Que puis-je faire pour vous ?');
+  const btn = $('#btn-ai'); btn.disabled = true; btn.textContent = '…';
+
+  try {
+    const textLower = text.toLowerCase();
+    
+    const isCheck = /coche|valide|termine|fait/i.test(textLower);
+    const isUrgentRemove = /pas urgent|enlève.*(l'urgence|urgent)|retire.*urgent|plus urgent/i.test(textLower);
+    const isDelete = !isUrgentRemove && /supprime|efface|retire|enlève|annule/i.test(textLower);
+    
+    const isUrgentSet = /mets?.*urgent|passe.*urgent|rends?.*urgent|en urgent|haute urgence|marquer?.*urgent|urgent\b/i.test(textLower);
+    const isExplicitCreation = /^(ajoute|créer?|nouvelle)\b/i.test(textLower);
+    const isRoutineIntent = /routine|récurren|tous les|chaque|quotidien/i.test(textLower);
+
+    let candidateTasks = [...tasks];
+    if (isRoutineIntent) {
+      const templates = candidateTasks.filter(t => isTemplate(t));
+      if (templates.length > 0) candidateTasks = templates;
+    }
+    candidateTasks.sort((a, b) => b.title.length - a.title.length);
+    const targetTask = candidateTasks.find(t => textLower.includes(t.title.toLowerCase()));
+
+    const hasEditKeywords = /modifie|change|décale|repousse|mets?|enlève|retire|passe|rends?|marquer?/i.test(textLower) || isUrgentRemove || isUrgentSet;
+    const isEdit = (targetTask && !isExplicitCreation) && (hasEditKeywords || isCheck || isDelete);
+
+    if (isCheck || isDelete || isEdit) {
+      if (targetTask) {
+        if (isCheck) {
+          await sb.from('tasks').update({ done: true }).eq('id', targetTask.id);
+          toast(`✅ "${targetTask.title}" validée !`);
+          $('#ai-input').value = '';
+          return await refresh(false);
+        }
+        if (isDelete) {
+          await sb.from('tasks').delete().eq('id', targetTask.id);
+          toast(`🗑️ "${targetTask.title}" (${isTemplate(targetTask) ? 'Routine' : 'Tâche'}) supprimée !`);
+          $('#ai-input').value = '';
+          return await refresh(false);
+        }
+        if (isEdit) {
+          let detectedTime = null;
+          const timeMatch = textLower.match(/(\d{1,2})[h:](\d{2})?/);
+          if (timeMatch) {
+            const hh = timeMatch[1].padStart(2, '0');
+            const mm = timeMatch[2] ? timeMatch[2] : '00';
+            detectedTime = `${hh}:${mm}`;
+          }
+
+          let detectedDays = parseDaysFromText(textLower);
+          let detectedCategory = parseCategoryFromText(textLower);
+          let detectedDate = parseTargetDate(textLower);
+
+          let parsed = {};
+          try {
+            const { data, error } = await sb.functions.invoke('groq-assistant', { body: { prompt: text, today: todayISO() } });
+            if (!error && data?.result) {
+              parsed = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
+            }
+          } catch(e) {}
+
+          const updates = {};
+          if (detectedTime) updates.due_time = detectedTime;
+          if (parsed.due_time) updates.due_time = parsed.due_time;
+          
+          const isRename = /renomme|appelle|change.*(titre|nom)/i.test(textLower);
+          if (isRename && parsed.title && parsed.title.toLowerCase() !== targetTask.title.toLowerCase()) {
+            updates.title = parsed.title;
+          }
+
+          let finalCategory = parsed.category || detectedCategory;
+          if (finalCategory) updates.category = finalCategory;
+
+          let finalDate = parsed.due_date || detectedDate;
+          if (finalDate) updates.due_date = finalDate;
+
+          let finalDays = parseDays(parsed.recurring_days);
+          if (finalDays.length === 0 && detectedDays.length > 0) finalDays = detectedDays;
+          if (isTemplate(targetTask) && finalDays.length > 0) {
+            updates.recurring_days = finalDays;
+          }
+
+          if (isUrgentRemove) {
+            updates.urgent = false;
+          } else if (isUrgentSet || parsed.urgent === true) {
+            updates.urgent = true;
+          } else if (parsed.urgent === false) {
+            updates.urgent = false;
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await sb.from('tasks').update(updates).eq('id', targetTask.id);
+
+            const instanceUpdates = {};
+            if (updates.title) instanceUpdates.title = updates.title;
+            if (updates.due_time !== undefined) instanceUpdates.due_time = updates.due_time;
+            if (updates.category) instanceUpdates.category = updates.category;
+            if (updates.due_date) instanceUpdates.due_date = updates.due_date;
+            if (updates.urgent !== undefined) instanceUpdates.urgent = updates.urgent;
+
+            if (Object.keys(instanceUpdates).length > 0) {
+              await sb.from('tasks').update(instanceUpdates).eq('parent_id', targetTask.id).eq('done', false);
+            }
+
+            toast(`✏️ "${targetTask.title}" (${isTemplate(targetTask) ? 'Routine et tâches associées' : 'Tâche'}) mise à jour !`);
+          } else {
+            toast(`ℹ️ Précisez la modification pour "${targetTask.title}".`);
+          }
+
+          $('#ai-input').value = '';
+          return await refresh(false);
+        }
+      } else {
+        toast('⚠️ Aucune tâche ou routine correspondante trouvée.');
+        btn.disabled = false; btn.textContent = '➤';
+        return;
+      }
+    }
+
+    const hasRecurrencePattern = /tou[ts]? les|chaque|récurren|every|sauf/i.test(textLower);
+    let detectedDays = parseDaysFromText(textLower);
+    let detectedCategory = parseCategoryFromText(textLower);
+    let detectedDate = parseTargetDate(textLower);
+
+    let detectedTime = null;
+    const timeMatch = textLower.match(/(\d{1,2})[h:](\d{2})?/);
+    if (timeMatch) {
+      const hh = timeMatch[1].padStart(2, '0');
+      const mm = timeMatch[2] ? timeMatch[2] : '00';
+      detectedTime = `${hh}:${mm}`;
+    }
+
+    let parsed = {};
+    try {
+      const { data, error } = await sb.functions.invoke('groq-assistant', { body: { prompt: text, today: todayISO() } });
+      if (!error && data?.result) {
+        parsed = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
+      }
+    } catch(e) { console.warn('Repli IA local', e); }
+
+    const isRecurring = parsed.is_recurring || hasRecurrencePattern || detectedDays.length > 0;
+    
+    let finalDays = parseDays(parsed.recurring_days);
+    if (finalDays.length === 0 && detectedDays.length > 0) finalDays = detectedDays;
+    if (isRecurring && finalDays.length === 0) finalDays = [0,1,2,3,4,5,6];
+
+    const finalCategory = parsed.category || detectedCategory || 'study';
+    const finalTime = parsed.due_time || detectedTime || null;
+    const finalDate = parsed.due_date || detectedDate || todayISO();
+    const finalTitle = parsed.title || text.replace(/^(ajoute|créer?|ajoute la tâche)\s/i, '');
+    const finalUrgent = parsed.urgent || /urgent|haute urgence/i.test(textLower);
+
+    if (isRecurring) {
+      await sb.from('tasks').insert({ user_id: session.user.id, title: finalTitle, category: finalCategory, due_time: finalTime, urgent: !!finalUrgent, recurring_days: finalDays });
+      toast('🔁 Récurrence enregistrée !');
+    } else {
+      await sb.from('tasks').insert({ user_id: session.user.id, title: finalTitle, category: finalCategory, urgent: !!finalUrgent, due_date: finalDate, due_time: finalTime });
+      toast('✨ Tâche créée !');
+    }
+
+    $('#ai-input').value = '';
+    await refresh(true);
+  } catch (err) {
+    toast('Erreur : ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '➤';
+  }
+};
+
+$('#rec-cat-chips').onclick = e => {
+  const c = e.target.closest('[data-cat]'); if (!c) return;
+  recCategory = c.dataset.cat;
+  $$('#rec-cat-chips .chip').forEach(x => x.classList.toggle('on', x === c));
+};
+
+$('#rec-days').onclick = e => {
+  const c = e.target.closest('[data-dow]'); if (!c) return;
+  const d = +c.dataset.dow;
+  recDays.has(d) ? recDays.delete(d) : recDays.add(d);
+  c.classList.toggle('on', recDays.has(d));
+};
+
+$('#rec-urgent-chip').onclick = e => {
+  recUrgent = !recUrgent;
+  e.target.classList.toggle('on', recUrgent);
+};
+
+$('#btn-rec').onclick = async () => {
+  const name = $('#rec-name').value.trim();
+  if (!name) return toast('Indiquez un nom pour la corvée.');
+  if (!recDays.size) return toast('Sélectionnez au moins un jour.');
+  const { error } = await sb.from('tasks').insert({ user_id: session.user.id, title: name, category: recCategory, urgent: recUrgent, due_time: $('#rec-time').value || null, recurring_days: Array.from(recDays).sort() });
+  if (error) return toast(error.message);
+  $('#rec-name').value = ''; recDays.clear(); recUrgent = false;
+  $$('#rec-days .day-circle').forEach(c => c.classList.remove('on'));
+  $('#rec-urgent-chip').classList.remove('on');
+  refresh(true); toast('Récurrence enregistrée 🔁');
+};
+</script>
+</body>
+</html>
