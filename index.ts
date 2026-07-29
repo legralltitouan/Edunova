@@ -1,19 +1,23 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { ...cors, "Content-Type": "application/json" },
   });
+
 // ---------- Validation du schéma renvoyé par le LLM ----------
 const ACTION_TYPES = new Set([
   "create", "create_recurring", "complete", "uncomplete", "delete",
   "postpone", "update", "set_urgent", "delete_recurring", "none",
 ]);
 const CATEGORIES = new Set(["chores", "shopping", "study"]);
+
 function sanitize(raw: any) {
   const out: { reply: string; actions: any[] } = {
     reply: typeof raw?.reply === "string" ? raw.reply.slice(0, 500) : "C'est fait !",
@@ -49,12 +53,16 @@ function sanitize(raw: any) {
   }
   return out;
 }
+
 // ---------- Appel Groq avec retry si JSON invalide ----------
 async function callGroq(messages: any[]) {
+  const apiKey = Deno.env.get("GROQ_API_KEY");
+  if (!apiKey) throw new Error("La clé GROQ_API_KEY est manquante dans les secrets Supabase.");
+
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${Deno.env.get("GROQ_API_KEY")}`,
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -65,22 +73,36 @@ async function callGroq(messages: any[]) {
       messages,
     }),
   });
+  
   const data = await res.json();
-  if (!res.ok) throw new Error(JSON.stringify(data));
+  if (!res.ok) {
+    if (res.status === 429) {
+      throw new Error("Limite de requêtes Groq atteinte (Rate Limit). Réessayez dans un instant.");
+    }
+    throw new Error(data.error?.message || JSON.stringify(data));
+  }
   return data.choices?.[0]?.message?.content ?? "";
 }
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+
   try {
     const { prompt, today, tasks = [], recurrences = [], history = [] } = await req.json();
-    if (typeof prompt !== "string" || !prompt.trim()) return json({ error: "prompt manquant" }, 400);
-    // Contexte compact (plafonné) des tâches existantes → l'IA peut agir dessus
+    
+    if (typeof prompt !== "string" || !prompt.trim()) {
+      return json({ result: { reply: "Désolé, votre demande est vide.", actions: [] } });
+    }
+
+    // Contexte compact (plafonné) des tâches existantes
     const taskCtx = (Array.isArray(tasks) ? tasks : []).slice(0, 60)
       .map((t: any) => `- id:${t.id} | "${t.title}" | cat:${t.category} | date:${t.due_date ?? "aucune"} | heure:${t.due_time ?? "-"} | urgent:${!!t.urgent} | fait:${!!t.done}`)
       .join("\n") || "(aucune tâche)";
+
     const recCtx = (Array.isArray(recurrences) ? recurrences : []).slice(0, 30)
       .map((r: any) => `- id:${r.id} | "${r.title}" | jours:[${(r.recurring_days ?? []).join(",")}] | heure:${r.due_time ?? "-"} | cat:${r.category}`)
       .join("\n") || "(aucune récurrence)";
+
     const system = `Tu es l'assistant IA de StudySpace, une application de gestion de tâches. Tu réponds en français, tu es concis et sympathique.
 Aujourd'hui : ${today}. Jours : 0=Dimanche, 1=Lundi, 2=Mardi, 3=Mercredi, 4=Jeudi, 5=Vendredi, 6=Samedi.
 TÂCHES EXISTANTES DE L'UTILISATEUR :
@@ -111,6 +133,7 @@ Règles :
 - urgent = true si "urgent", "prioritaire", "vite", "important", "🔥", "asap".
 - "is_recurring" implicite : "tous les", "chaque", "le lundi" (habitude), "quotidien", "hebdomadaire" → create_recurring. "tous les jours" → [0,1,2,3,4,5,6]. "en semaine" → [1,2,3,4,5]. "le week-end" → [0,6].
 - "reply" doit refléter fidèlement ce qui a été fait ("J'ai ajouté... et décalé..."). Jamais de texte hors du JSON.`;
+
     const messages: any[] = [{ role: "system", content: system }];
     for (const h of (Array.isArray(history) ? history : []).slice(-6)) {
       if (h?.role === "user" || h?.role === "assistant") {
@@ -118,6 +141,7 @@ Règles :
       }
     }
     messages.push({ role: "user", content: prompt.slice(0, 1000) });
+
     // 1er essai + retry automatique si le JSON est invalide
     let parsed: any = null;
     let content = await callGroq(messages);
@@ -129,10 +153,19 @@ Règles :
         { role: "assistant", content },
         { role: "user", content: "Ta réponse n'était pas un JSON valide. Renvoie UNIQUEMENT l'objet JSON corrigé, sans aucun autre texte." },
       ]);
-      parsed = JSON.parse(content); // si ça échoue encore → catch global
+      parsed = JSON.parse(content);
     }
+
     return json({ result: sanitize(parsed) });
-  } catch (e) {
-    return json({ error: String(e) }, 500);
+
+  } catch (e: any) {
+    // ⚠️ ASTUCE CLÉ : On intercepte l'erreur et renvoie du 200 HTTP 
+    // pour éviter l'erreur globale client "non-2xx status code"
+    return json({ 
+      result: { 
+        reply: `⚠️ Une erreur est survenue : ${e.message || "Impossible de contacter l'IA."}`, 
+        actions: [] 
+      } 
+    }, 200);
   }
 });
