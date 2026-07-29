@@ -92,12 +92,21 @@ nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 
 .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .sheet-head h3 { font-size: 1.25rem; font-weight: 800; }
 .x { background: #f1f5f9; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; color: var(--mut); display: flex; align-items: center; justify-content: center; }
+
+/* Styles IA Chat intégrés */
 .ai-box { background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); border: 1.5px dashed #bfdbfe; border-radius: 16px; padding: 14px; margin-bottom: 24px; }
-.ai-box .lbl { font-size: 0.8rem; font-weight: 800; color: var(--p); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.ai-box .lbl { font-size: 0.8rem; font-weight: 800; color: var(--p); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+#aiLog { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding: 2px; }
+.bubble { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 0.88rem; line-height: 1.45; white-space: pre-wrap; font-weight: 500; }
+.bubble.user { align-self: flex-end; background: var(--p); color: #fff; border-bottom-right-radius: 4px; box-shadow: 0 4px 10px rgba(29, 97, 231, 0.15); }
+.bubble.bot { align-self: flex-start; background: #fff; border: 1px solid #bfdbfe; color: var(--txt); border-bottom-left-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+.bubble.bot.thinking { color: var(--mut); font-style: italic; background: transparent; border: none; box-shadow: none; padding-left: 0; }
 .ai-row { display: flex; gap: 8px; }
 .ai-row input { flex: 1; margin: 0; border-color: #bfdbfe; font-size: 0.9rem; }
-.ai-row button { background: var(--p); color: #fff; border-radius: 12px; padding: 0 18px; font-weight: 800; }
+.ai-row button { background: var(--p); color: #fff; border-radius: 12px; padding: 0 18px; font-weight: 800; transition: transform 0.15s; }
+.ai-row button:active { transform: scale(0.9); }
 .ai-hints { font-size: 0.72rem; color: #64748b; margin-top: 8px; text-align: center; }
+
 #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #0f172a; color: #fff; padding: 12px 22px; border-radius: 99px; font-size: 0.88rem; font-weight: 600; z-index: 99; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 #auth { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(160deg, #1d61e7 0%, #154ec2 60%, #0f172a 100%); }
@@ -134,10 +143,12 @@ nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 
     <section id="view-dashboard" class="view">
       <h2 class="big" id="greeting" style="margin-bottom:12px;">Bon retour !</h2>
 
+      <!-- NOUVELLE AI BOX (CHAT) -->
       <div class="ai-box">
         <div class="lbl">🤖 Assistant IA Interactif</div>
+        <div id="aiLog"></div>
         <div class="ai-row">
-          <input id="ai-input" class="field" placeholder="Ex: Met tennis en urgent ou enlève l'urgence...">
+          <input id="ai-input" class="field" placeholder="Discutez pour gérer vos tâches..." autocomplete="off">
           <button id="btn-ai">➤</button>
         </div>
         <div class="ai-hints">Ajoutez, décalez, gérez l'urgence ou validez vos tâches.</div>
@@ -261,7 +272,6 @@ nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 
       <button class="chip" data-cat="study">📚 Études</button>
     </div>
 
-    <!-- Section Échéance (uniquement pour les tâches normales) -->
     <div id="modal-echeance-wrap">
       <label class="eyebrow">Échéance</label>
       <div class="chips" id="day-chips">
@@ -272,7 +282,6 @@ nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 
       <input id="task-custom-date" class="field hidden" type="date" style="margin-top: -6px;">
     </div>
 
-    <!-- Section Jours spécifiques (uniquement pour les routines) -->
     <div id="modal-routine-days-wrap" class="hidden">
       <label class="eyebrow" style="margin-bottom:8px; display:block;">Jours spécifiques</label>
       <div class="days-picker" id="modal-rec-days">
@@ -324,6 +333,9 @@ const recDays = new Set();
 let recCategory = 'chores';
 let recUrgent = false;
 
+// Variables pour l'IA
+let aiHistory = [];
+
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2800);
@@ -337,73 +349,6 @@ function parseDays(input) {
     if (typeof v === 'number' && !isNaN(v) && v >= 0 && v <= 6) res.add(v);
   });
   return Array.from(res).sort();
-}
-
-function parseDaysFromText(textLower) {
-  let days = [];
-  const hasEvery = /tou[ts]? les jours?|chaque jour|quotidien/i.test(textLower);
-  
-  if (hasEvery) {
-    days = [0, 1, 2, 3, 4, 5, 6];
-  } else {
-    if (/dimanche|dim\b|sun/i.test(textLower)) days.push(0);
-    if (/lundi|lun\b|mon/i.test(textLower)) days.push(1);
-    if (/mardi|mar\b|tue/i.test(textLower)) days.push(2);
-    if (/mercredi|mer\b|wed/i.test(textLower)) days.push(3);
-    if (/jeudi|jeu\b|thu/i.test(textLower)) days.push(4);
-    if (/vendredi|ven\b|fri/i.test(textLower)) days.push(5);
-    if (/samedi|sam\b|sat/i.test(textLower)) days.push(6);
-  }
-
-  if (/sauf|excepté|hors/i.test(textLower)) {
-    if (!hasEvery) days = [0, 1, 2, 3, 4, 5, 6];
-    const excludeDays = [];
-    const parts = textLower.split(/sauf|excepté|hors/);
-    if (parts.length > 1) {
-      const exclusionPart = parts[1];
-      if (/dimanche|dim\b|sun/i.test(exclusionPart)) excludeDays.push(0);
-      if (/lundi|lun\b|mon/i.test(exclusionPart)) excludeDays.push(1);
-      if (/mardi|mar\b|tue/i.test(exclusionPart)) excludeDays.push(2);
-      if (/mercredi|mer\b|wed/i.test(exclusionPart)) excludeDays.push(3);
-      if (/jeudi|jeu\b|thu/i.test(exclusionPart)) excludeDays.push(4);
-      if (/vendredi|ven\b|fri/i.test(exclusionPart)) excludeDays.push(5);
-      if (/samedi|sam\b|sat/i.test(exclusionPart)) excludeDays.push(6);
-    }
-    days = days.filter(d => !excludeDays.includes(d));
-  }
-
-  return Array.from(new Set(days)).sort();
-}
-
-function parseCategoryFromText(textLower) {
-  if (/maison|ménage|corvée|nettoi|chores/i.test(textLower)) return 'chores';
-  if (/shopping|course|courses|achat/i.test(textLower)) return 'shopping';
-  if (/étude|études|cours|devoir|travail|study/i.test(textLower)) return 'study';
-  return null;
-}
-
-function parseTargetDate(textLower) {
-  if (/aujourd['\s]?hui/i.test(textLower)) {
-    return todayISO();
-  }
-  if (/demain/i.test(textLower)) {
-    return tomorrowISO();
-  }
-  const dateMatch = textLower.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-  if (dateMatch) {
-    const day = dateMatch[1].padStart(2, '0');
-    const month = dateMatch[2].padStart(2, '0');
-    const year = dateMatch[3];
-    return `${year}-${month}-${day}`;
-  }
-  const shortDateMatch = textLower.match(/(\d{1,2})[\/\-](\d{1,2})(?!\/\d)/);
-  if (shortDateMatch) {
-    const day = shortDateMatch[1].padStart(2, '0');
-    const month = shortDateMatch[2].padStart(2, '0');
-    const year = new Date().getFullYear();
-    return `${year}-${month}-${day}`;
-  }
-  return null;
 }
 
 function getRecDays(t) {
@@ -730,178 +675,220 @@ $('#btn-add').onclick = async () => {
 };
 
 /* =================================================================
-   ASSISTANT IA
+   ASSISTANT IA INTÉGRÉ
    ================================================================= */
+function bubble(text, who, thinking = false) {
+  const log = $('#aiLog');
+  const d = document.createElement('div');
+  d.className = `bubble ${who}${thinking ? ' thinking' : ''}`;
+  d.textContent = text;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+  return d;
+}
+
+function getTaskContext() {
+  return tasks.filter(t => !isTemplate(t)).map(t => ({
+    id: t.id, title: t.title, category: t.category, due_date: t.due_date, due_time: t.due_time, urgent: t.urgent, done: t.done
+  }));
+}
+
+function getRecContext() {
+  return tasks.filter(t => isTemplate(t)).map(t => ({
+    id: t.id, title: t.title, category: t.category, recurring_days: getRecDays(t), due_time: t.due_time
+  }));
+}
+
+function findTarget(action, pool) {
+  if (action.target_id) {
+    const byId = pool.find(t => t.id === action.target_id);
+    if (byId) return byId;
+  }
+  if (action.target_title) {
+    const q = action.target_title.toLowerCase().trim();
+    return pool.find(t => t.title.toLowerCase().includes(q));
+  }
+  return null;
+}
+
+async function executeActions(actions) {
+  const normalTasks = tasks.filter(t => !isTemplate(t));
+  const recTasks = tasks.filter(t => isTemplate(t));
+
+  for (const a of actions) {
+    let t;
+    switch (a.type) {
+      case 'create':
+        await sb.from('tasks').insert({
+          user_id: session.user.id, title: a.title, category: a.category,
+          urgent: a.urgent, due_date: a.due_date || todayISO(), due_time: a.due_time || null
+        });
+        break;
+      case 'create_recurring':
+        await sb.from('tasks').insert({
+          user_id: session.user.id, title: a.title, category: a.category,
+          urgent: a.urgent, recurring_days: a.recurring_days || [], due_time: a.due_time || null, due_date: null
+        });
+        break;
+      case 'complete':
+        t = findTarget(a, normalTasks);
+        if (t) await sb.from('tasks').update({ done: true }).eq('id', t.id);
+        break;
+      case 'uncomplete':
+        t = findTarget(a, normalTasks);
+        if (t) await sb.from('tasks').update({ done: false }).eq('id', t.id);
+        break;
+      case 'delete':
+        t = findTarget(a, normalTasks);
+        if (t) await sb.from('tasks').delete().eq('id', t.id);
+        break;
+      case 'delete_recurring':
+        t = findTarget(a, recTasks);
+        if (t) await sb.from('tasks').delete().eq('id', t.id);
+        break;
+      case 'postpone':
+        t = findTarget(a, normalTasks);
+        if (t) {
+          const up = { due_date: a.due_date };
+          if (a.due_time !== undefined) up.due_time = a.due_time;
+          await sb.from('tasks').update(up).eq('id', t.id);
+        }
+        break;
+      case 'update':
+      case 'update_recurring':
+        // Cible les tâches normales ET les routines
+        t = findTarget(a, normalTasks) || findTarget(a, recTasks);
+        
+        if (t) {
+          // Clone des champs à modifier pour être sûr d'avoir un objet valide
+          const fields = typeof a.fields === 'object' && a.fields !== null ? { ...a.fields } : {};
+
+          // Récupération de sécurité si l'IA met les données à la racine de l'action
+          if (a.title !== undefined && fields.title === undefined) fields.title = a.title;
+          if (a.category !== undefined && fields.category === undefined) fields.category = a.category;
+          if (a.due_time !== undefined && fields.due_time === undefined) fields.due_time = a.due_time;
+          if (a.recurring_days !== undefined && fields.recurring_days === undefined) fields.recurring_days = a.recurring_days;
+          if (a.urgent !== undefined && fields.urgent === undefined) fields.urgent = a.urgent;
+
+          // 1. NETTOYAGE ULTRA-ROBUSTE DES JOURS (recurring_days)
+          if (fields.recurring_days !== undefined) {
+            let rawDays = fields.recurring_days;
+            // Si l'IA renvoie une string ex: "1,2"
+            if (typeof rawDays === 'string') {
+              try { rawDays = JSON.parse(rawDays); } catch(e) { rawDays = rawDays.split(','); }
+            }
+            const arr = Array.isArray(rawDays) ? rawDays : [rawDays];
+            const validDays = new Set();
+            
+            // Dictionnaire pour attraper les mots si l'IA écrit "Lundi" au lieu de 1
+            const dayMap = { 'dim':0, 'sun':0, 'lun':1, 'mon':1, 'mar':2, 'tue':2, 'mer':3, 'wed':3, 'jeu':4, 'thu':4, 'ven':5, 'fri':5, 'sam':6, 'sat':6 };
+            
+            arr.forEach(val => {
+              let parsed = parseInt(val, 10);
+              // Si c'est un chiffre valide (0 à 6)
+              if (!isNaN(parsed) && parsed >= 0 && parsed <= 6) {
+                validDays.add(parsed);
+              } else if (typeof val === 'string') {
+                // Si c'est du texte, on cherche dans le dictionnaire
+                const str = val.toLowerCase().trim().substring(0,3);
+                if (dayMap[str] !== undefined) validDays.add(dayMap[str]);
+              }
+            });
+            fields.recurring_days = Array.from(validDays).sort();
+          }
+
+          // 2. NETTOYAGE ULTRA-ROBUSTE DE L'HORAIRE (due_time)
+          if (fields.due_time !== undefined) {
+             if (!fields.due_time || fields.due_time === 'none' || fields.due_time === 'null') {
+                fields.due_time = null; // Supprime l'heure
+             } else {
+                // Cherche un format "14h30", "14:30"
+                const match = String(fields.due_time).match(/(\d{1,2})[:hH](\d{2})?/);
+                if (match) {
+                   const h = match[1].padStart(2, '0');
+                   const m = (match[2] || '00').padStart(2, '0');
+                   fields.due_time = `${h}:${m}`;
+                } else {
+                   // Si l'IA n'a mis qu'un chiffre, ex: "14"
+                   const numMatch = String(fields.due_time).match(/^(\d{1,2})$/);
+                   if (numMatch) {
+                      fields.due_time = `${numMatch[1].padStart(2, '0')}:00`;
+                   } else {
+                      fields.due_time = null;
+                   }
+                }
+             }
+          }
+
+          // Nettoyage final : on retire les clés "undefined" qui peuvent faire planter Supabase
+          Object.keys(fields).forEach(key => fields[key] === undefined && delete fields[key]);
+
+          // Envoi de la mise à jour si des champs valides existent
+          if (Object.keys(fields).length > 0) {
+            await sb.from('tasks').update(fields).eq('id', t.id);
+          }
+        }
+        break;
+      case 'set_urgent':
+        t = findTarget(a, normalTasks) || findTarget(a, recTasks);
+        if (t) await sb.from('tasks').update({ urgent: a.urgent }).eq('id', t.id);
+        break;
+    }
+  }
+}
+
+$('#ai-input').onkeypress = (e) => {
+  if (e.key === 'Enter') $('#btn-ai').click();
+};
+
 $('#btn-ai').onclick = async () => {
   const text = $('#ai-input').value.trim();
   if (!text) return toast('Que puis-je faire pour vous ?');
-  const btn = $('#btn-ai'); btn.disabled = true; btn.textContent = '…';
+  
+  $('#ai-input').value = '';
+  bubble(text, 'user');
+  
+  aiHistory.push({ role: 'user', content: text });
+  if (aiHistory.length > 6) aiHistory.shift();
+
+  const thinkBubble = bubble('Réflexion en cours...', 'bot', true);
+  const btn = $('#btn-ai'); btn.disabled = true;
 
   try {
-    const textLower = text.toLowerCase();
-    
-    const isCheck = /coche|valide|termine|fait/i.test(textLower);
-    const isUrgentRemove = /pas urgent|enlève.*(l'urgence|urgent)|retire.*urgent|plus urgent/i.test(textLower);
-    const isDelete = !isUrgentRemove && /supprime|efface|retire|enlève|annule/i.test(textLower);
-    
-    const isUrgentSet = /mets?.*urgent|passe.*urgent|rends?.*urgent|en urgent|haute urgence|marquer?.*urgent|urgent\b/i.test(textLower);
-    const isExplicitCreation = /^(ajoute|créer?|nouvelle)\b/i.test(textLower);
-    const isRoutineIntent = /routine|récurren|tous les|chaque|quotidien/i.test(textLower);
-
-    let candidateTasks = [...tasks];
-    if (isRoutineIntent) {
-      const templates = candidateTasks.filter(t => isTemplate(t));
-      if (templates.length > 0) candidateTasks = templates;
-    }
-    candidateTasks.sort((a, b) => b.title.length - a.title.length);
-    const targetTask = candidateTasks.find(t => textLower.includes(t.title.toLowerCase()));
-
-    const hasEditKeywords = /modifie|change|décale|repousse|mets?|enlève|retire|passe|rends?|marquer?/i.test(textLower) || isUrgentRemove || isUrgentSet;
-    const isEdit = (targetTask && !isExplicitCreation) && (hasEditKeywords || isCheck || isDelete);
-
-    if (isCheck || isDelete || isEdit) {
-      if (targetTask) {
-        if (isCheck) {
-          await sb.from('tasks').update({ done: true }).eq('id', targetTask.id);
-          toast(`✅ "${targetTask.title}" validée !`);
-          $('#ai-input').value = '';
-          return await refresh(false);
-        }
-        if (isDelete) {
-          await sb.from('tasks').delete().eq('id', targetTask.id);
-          toast(`🗑️ "${targetTask.title}" (${isTemplate(targetTask) ? 'Routine' : 'Tâche'}) supprimée !`);
-          $('#ai-input').value = '';
-          return await refresh(false);
-        }
-        if (isEdit) {
-          let detectedTime = null;
-          const timeMatch = textLower.match(/(\d{1,2})[h:](\d{2})?/);
-          if (timeMatch) {
-            const hh = timeMatch[1].padStart(2, '0');
-            const mm = timeMatch[2] ? timeMatch[2] : '00';
-            detectedTime = `${hh}:${mm}`;
-          }
-
-          let detectedDays = parseDaysFromText(textLower);
-          let detectedCategory = parseCategoryFromText(textLower);
-          let detectedDate = parseTargetDate(textLower);
-
-          let parsed = {};
-          try {
-            const { data, error } = await sb.functions.invoke('groq-assistant', { body: { prompt: text, today: todayISO() } });
-            if (!error && data?.result) {
-              parsed = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
-            }
-          } catch(e) {}
-
-          const updates = {};
-          if (detectedTime) updates.due_time = detectedTime;
-          if (parsed.due_time) updates.due_time = parsed.due_time;
-          
-          const isRename = /renomme|appelle|change.*(titre|nom)/i.test(textLower);
-          if (isRename && parsed.title && parsed.title.toLowerCase() !== targetTask.title.toLowerCase()) {
-            updates.title = parsed.title;
-          }
-
-          let finalCategory = parsed.category || detectedCategory;
-          if (finalCategory) updates.category = finalCategory;
-
-          let finalDate = parsed.due_date || detectedDate;
-          if (finalDate) updates.due_date = finalDate;
-
-          let finalDays = parseDays(parsed.recurring_days);
-          if (finalDays.length === 0 && detectedDays.length > 0) finalDays = detectedDays;
-          if (isTemplate(targetTask) && finalDays.length > 0) {
-            updates.recurring_days = finalDays;
-          }
-
-          if (isUrgentRemove) {
-            updates.urgent = false;
-          } else if (isUrgentSet || parsed.urgent === true) {
-            updates.urgent = true;
-          } else if (parsed.urgent === false) {
-            updates.urgent = false;
-          }
-
-          if (Object.keys(updates).length > 0) {
-            await sb.from('tasks').update(updates).eq('id', targetTask.id);
-
-            const instanceUpdates = {};
-            if (updates.title) instanceUpdates.title = updates.title;
-            if (updates.due_time !== undefined) instanceUpdates.due_time = updates.due_time;
-            if (updates.category) instanceUpdates.category = updates.category;
-            if (updates.due_date) instanceUpdates.due_date = updates.due_date;
-            if (updates.urgent !== undefined) instanceUpdates.urgent = updates.urgent;
-
-            if (Object.keys(instanceUpdates).length > 0) {
-              await sb.from('tasks').update(instanceUpdates).eq('parent_id', targetTask.id).eq('done', false);
-            }
-
-            toast(`✏️ "${targetTask.title}" (${isTemplate(targetTask) ? 'Routine et tâches associées' : 'Tâche'}) mise à jour !`);
-          } else {
-            toast(`ℹ️ Précisez la modification pour "${targetTask.title}".`);
-          }
-
-          $('#ai-input').value = '';
-          return await refresh(false);
-        }
-      } else {
-        toast('⚠️ Aucune tâche ou routine correspondante trouvée.');
-        btn.disabled = false; btn.textContent = '➤';
-        return;
+    const { data, error } = await sb.functions.invoke('groq-assistant', {
+      body: {
+        prompt: text,
+        today: todayISO(),
+        tasks: getTaskContext(),
+        recurrences: getRecContext(),
+        history: aiHistory
       }
-    }
+    });
 
-    const hasRecurrencePattern = /tou[ts]? les|chaque|récurren|every|sauf/i.test(textLower);
-    let detectedDays = parseDaysFromText(textLower);
-    let detectedCategory = parseCategoryFromText(textLower);
-    let detectedDate = parseTargetDate(textLower);
+    thinkBubble.remove();
+    if (error) throw new Error(error.message);
 
-    let detectedTime = null;
-    const timeMatch = textLower.match(/(\d{1,2})[h:](\d{2})?/);
-    if (timeMatch) {
-      const hh = timeMatch[1].padStart(2, '0');
-      const mm = timeMatch[2] ? timeMatch[2] : '00';
-      detectedTime = `${hh}:${mm}`;
-    }
-
-    let parsed = {};
-    try {
-      const { data, error } = await sb.functions.invoke('groq-assistant', { body: { prompt: text, today: todayISO() } });
-      if (!error && data?.result) {
-        parsed = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
-      }
-    } catch(e) { console.warn('Repli IA local', e); }
-
-    const isRecurring = parsed.is_recurring || hasRecurrencePattern || detectedDays.length > 0;
+    const result = data.result;
+    bubble(result.reply, 'bot');
     
-    let finalDays = parseDays(parsed.recurring_days);
-    if (finalDays.length === 0 && detectedDays.length > 0) finalDays = detectedDays;
-    if (isRecurring && finalDays.length === 0) finalDays = [0,1,2,3,4,5,6];
+    aiHistory.push({ role: 'assistant', content: result.reply });
+    if (aiHistory.length > 6) aiHistory.shift();
 
-    const finalCategory = parsed.category || detectedCategory || 'study';
-    const finalTime = parsed.due_time || detectedTime || null;
-    const finalDate = parsed.due_date || detectedDate || todayISO();
-    const finalTitle = parsed.title || text.replace(/^(ajoute|créer?|ajoute la tâche)\s/i, '');
-    const finalUrgent = parsed.urgent || /urgent|haute urgence/i.test(textLower);
-
-    if (isRecurring) {
-      await sb.from('tasks').insert({ user_id: session.user.id, title: finalTitle, category: finalCategory, due_time: finalTime, urgent: !!finalUrgent, recurring_days: finalDays });
-      toast('🔁 Récurrence enregistrée !');
-    } else {
-      await sb.from('tasks').insert({ user_id: session.user.id, title: finalTitle, category: finalCategory, urgent: !!finalUrgent, due_date: finalDate, due_time: finalTime });
-      toast('✨ Tâche créée !');
+    if (result.actions && result.actions.length > 0) {
+       await executeActions(result.actions);
+       await refresh(true);
     }
-
-    $('#ai-input').value = '';
-    await refresh(true);
   } catch (err) {
-    toast('Erreur : ' + err.message);
+    thinkBubble.remove();
+    bubble('Erreur : ' + err.message, 'bot');
   } finally {
-    btn.disabled = false; btn.textContent = '➤';
+    btn.disabled = false;
   }
 };
 
+/* =================================================================
+   RÉCURRENCES MANUELLES
+   ================================================================= */
 $('#rec-cat-chips').onclick = e => {
   const c = e.target.closest('[data-cat]'); if (!c) return;
   recCategory = c.dataset.cat;
