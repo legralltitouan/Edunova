@@ -40,16 +40,12 @@ h2.big { font-size: 1.5rem; font-weight: 800; color: var(--txt); margin-bottom: 
 .ring .pct { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 800; color: var(--txt); }
 .ring .pct span { font-size: 0.75rem; color: var(--mut); font-weight: 600; text-transform: uppercase; }
 .ring-label { color: var(--mut); font-size: 0.88rem; font-weight: 600; margin-top: 12px; }
-.card-blue { background: linear-gradient(135deg, #1d61e7 0%, #154ec2 100%); color: #fff; position: relative; overflow: hidden; }
-.card-blue .mini-title { color: #fff; font-size: 1.1rem; }
-.card-blue .mini-sub { color: rgba(255,255,255,0.8); }
-.xp-tag { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 800; }
 .t-item { display: flex; align-items: center; gap: 14px; background: var(--card); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; border-left: 5px solid transparent; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
 .t-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
 .t-item.cat-chores { border-left-color: var(--ok); }
 .t-item.cat-study { border-left-color: var(--warn); }
 .t-item.cat-shopping { border-left-color: var(--p); }
-.chk { width: 26px; height: 26px; min-width: 26px; border-radius: 9px; border: 2px solid #cbd5e1; background: #fff; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; font-weight: 800; transition: all 0.2s; }
+.chk { width: 26px; height: 26px; min-width: 26px; border-radius: 99px; border: 2px solid #cbd5e1; background: #fff; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; font-weight: 800; transition: all 0.2s; }
 .chk:active { transform: scale(0.85); }
 .t-item.done .chk { background: var(--ok); border-color: var(--ok); animation: checkPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 @keyframes checkPop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
@@ -93,7 +89,7 @@ nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 
 .sheet-head h3 { font-size: 1.25rem; font-weight: 800; }
 .x { background: #f1f5f9; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; color: var(--mut); display: flex; align-items: center; justify-content: center; }
 
-/* Styles IA Chat intégrés */
+/* Styles IA Chat */
 .ai-box { background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); border: 1.5px dashed #bfdbfe; border-radius: 16px; padding: 14px; margin-bottom: 24px; }
 .ai-box .lbl { font-size: 0.8rem; font-weight: 800; color: var(--p); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 #aiLog { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding: 2px; }
@@ -105,6 +101,12 @@ nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 
 .ai-row input { flex: 1; margin: 0; border-color: #bfdbfe; font-size: 0.9rem; }
 .ai-row button { background: var(--p); color: #fff; border-radius: 12px; padding: 0 18px; font-weight: 800; transition: transform 0.15s; }
 .ai-row button:active { transform: scale(0.9); }
+
+/* Microphone */
+.ai-row button#btn-mic { background: #f1f5f9; color: var(--txt); border-radius: 12px; padding: 0 14px; font-size: 1.1rem; transition: all 0.2s ease; }
+.ai-row button#btn-mic.listening { background: var(--red-soft); color: var(--red); animation: pulseMic 1.2s infinite alternate; }
+@keyframes pulseMic { from { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } to { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } }
+
 .ai-hints { font-size: 0.72rem; color: #64748b; margin-top: 8px; text-align: center; }
 
 #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #0f172a; color: #fff; padding: 12px 22px; border-radius: 99px; font-size: 0.88rem; font-weight: 600; z-index: 99; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -143,13 +145,14 @@ nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 
     <section id="view-dashboard" class="view">
       <h2 class="big" id="greeting" style="margin-bottom:12px;">Bon retour !</h2>
 
-      <!-- NOUVELLE AI BOX (CHAT) -->
+      <!-- IA BOX -->
       <div class="ai-box">
         <div class="lbl">🤖 Assistant IA Interactif</div>
         <div id="aiLog"></div>
         <div class="ai-row">
-          <input id="ai-input" class="field" placeholder="Discutez pour gérer vos tâches..." autocomplete="off">
-          <button id="btn-ai">➤</button>
+          <input id="ai-input" class="field" placeholder="Discutez ou dictez votre demande..." autocomplete="off">
+          <button id="btn-mic" type="button" title="Activer le micro">🎙️</button>
+          <button id="btn-ai" type="button">➤</button>
         </div>
         <div class="ai-hints">Ajoutez, décalez, gérez l'urgence ou validez vos tâches.</div>
       </div>
@@ -333,8 +336,9 @@ const recDays = new Set();
 let recCategory = 'chores';
 let recUrgent = false;
 
-// Variables pour l'IA
+// Variables IA
 let aiHistory = [];
+let isVoiceSubmission = false; // <-- Permet de savoir si la requête vient du micro
 
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
@@ -675,7 +679,7 @@ $('#btn-add').onclick = async () => {
 };
 
 /* =================================================================
-   ASSISTANT IA INTÉGRÉ
+   ASSISTANT IA INTÉGRÉ + VOCAL (CONDITIONNÉ AU MICRO)
    ================================================================= */
 function bubble(text, who, thinking = false) {
   const log = $('#aiLog');
@@ -756,40 +760,32 @@ async function executeActions(actions) {
         break;
       case 'update':
       case 'update_recurring':
-        // Cible les tâches normales ET les routines
         t = findTarget(a, normalTasks) || findTarget(a, recTasks);
         
         if (t) {
-          // Clone des champs à modifier pour être sûr d'avoir un objet valide
           const fields = typeof a.fields === 'object' && a.fields !== null ? { ...a.fields } : {};
 
-          // Récupération de sécurité si l'IA met les données à la racine de l'action
           if (a.title !== undefined && fields.title === undefined) fields.title = a.title;
           if (a.category !== undefined && fields.category === undefined) fields.category = a.category;
           if (a.due_time !== undefined && fields.due_time === undefined) fields.due_time = a.due_time;
           if (a.recurring_days !== undefined && fields.recurring_days === undefined) fields.recurring_days = a.recurring_days;
           if (a.urgent !== undefined && fields.urgent === undefined) fields.urgent = a.urgent;
 
-          // 1. NETTOYAGE ULTRA-ROBUSTE DES JOURS (recurring_days)
+          // Nettoyage des jours
           if (fields.recurring_days !== undefined) {
             let rawDays = fields.recurring_days;
-            // Si l'IA renvoie une string ex: "1,2"
             if (typeof rawDays === 'string') {
               try { rawDays = JSON.parse(rawDays); } catch(e) { rawDays = rawDays.split(','); }
             }
             const arr = Array.isArray(rawDays) ? rawDays : [rawDays];
             const validDays = new Set();
-            
-            // Dictionnaire pour attraper les mots si l'IA écrit "Lundi" au lieu de 1
             const dayMap = { 'dim':0, 'sun':0, 'lun':1, 'mon':1, 'mar':2, 'tue':2, 'mer':3, 'wed':3, 'jeu':4, 'thu':4, 'ven':5, 'fri':5, 'sam':6, 'sat':6 };
             
             arr.forEach(val => {
               let parsed = parseInt(val, 10);
-              // Si c'est un chiffre valide (0 à 6)
               if (!isNaN(parsed) && parsed >= 0 && parsed <= 6) {
                 validDays.add(parsed);
               } else if (typeof val === 'string') {
-                // Si c'est du texte, on cherche dans le dictionnaire
                 const str = val.toLowerCase().trim().substring(0,3);
                 if (dayMap[str] !== undefined) validDays.add(dayMap[str]);
               }
@@ -797,19 +793,17 @@ async function executeActions(actions) {
             fields.recurring_days = Array.from(validDays).sort();
           }
 
-          // 2. NETTOYAGE ULTRA-ROBUSTE DE L'HORAIRE (due_time)
+          // Nettoyage de l'horaire
           if (fields.due_time !== undefined) {
              if (!fields.due_time || fields.due_time === 'none' || fields.due_time === 'null') {
-                fields.due_time = null; // Supprime l'heure
+                fields.due_time = null;
              } else {
-                // Cherche un format "14h30", "14:30"
                 const match = String(fields.due_time).match(/(\d{1,2})[:hH](\d{2})?/);
                 if (match) {
                    const h = match[1].padStart(2, '0');
                    const m = (match[2] || '00').padStart(2, '0');
                    fields.due_time = `${h}:${m}`;
                 } else {
-                   // Si l'IA n'a mis qu'un chiffre, ex: "14"
                    const numMatch = String(fields.due_time).match(/^(\d{1,2})$/);
                    if (numMatch) {
                       fields.due_time = `${numMatch[1].padStart(2, '0')}:00`;
@@ -820,10 +814,8 @@ async function executeActions(actions) {
              }
           }
 
-          // Nettoyage final : on retire les clés "undefined" qui peuvent faire planter Supabase
           Object.keys(fields).forEach(key => fields[key] === undefined && delete fields[key]);
 
-          // Envoi de la mise à jour si des champs valides existent
           if (Object.keys(fields).length > 0) {
             await sb.from('tasks').update(fields).eq('id', t.id);
           }
@@ -835,6 +827,105 @@ async function executeActions(actions) {
         break;
     }
   }
+}
+
+// Synthèse Vocale (Lecture)
+function speakText(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const cleanText = text
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+    .replace(/[*#_~`]/g, '')
+    .trim();
+
+  if (!cleanText) return;
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = 'fr-FR';
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  const voices = window.speechSynthesis.getVoices();
+  const googleVoice = voices.find(v => v.lang.startsWith('fr') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium')));
+  const defaultFrVoice = voices.find(v => v.lang.startsWith('fr'));
+
+  if (googleVoice) utterance.voice = googleVoice;
+  else if (defaultFrVoice) utterance.voice = defaultFrVoice;
+
+  window.speechSynthesis.speak(utterance);
+}
+
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// Si l'utilisateur saisit du texte au clavier, réinitialiser l'indicateur vocal
+$('#ai-input').addEventListener('input', () => {
+  isVoiceSubmission = false;
+});
+
+// Reconnaissance Vocale (Micro)
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isListening = false;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = 'fr-FR';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  const micBtn = $('#btn-mic');
+  const input = $('#ai-input');
+
+  micBtn.onclick = () => {
+    if (isListening) {
+      recognition.stop();
+    } else {
+      try {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        isVoiceSubmission = false;
+        recognition.start();
+      } catch (err) {
+        console.error("Erreur lancement micro:", err);
+      }
+    }
+  };
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    input.placeholder = "Écoute en cours...";
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    input.value = transcript;
+  };
+
+  recognition.onerror = (e) => {
+    console.warn("Erreur reconnaissance vocale :", e.error);
+    toast("Erreur micro : " + e.error);
+    stopMic();
+  };
+
+  recognition.onend = () => {
+    stopMic();
+    if (input.value.trim().length > 0) {
+      isVoiceSubmission = true; // Demande issue de la dictée vocale
+      $('#btn-ai').click();
+    }
+  };
+
+  function stopMic() {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    input.placeholder = "Discutez ou dictez votre demande...";
+  }
+} else {
+  if ($('#btn-mic')) $('#btn-mic').style.display = 'none';
 }
 
 $('#ai-input').onkeypress = (e) => {
@@ -871,6 +962,12 @@ $('#btn-ai').onclick = async () => {
     const result = data.result;
     bubble(result.reply, 'bot');
     
+    // Vocalisation UNIQUEMENT si la requête a été transmise via le micro
+    if (isVoiceSubmission) {
+      speakText(result.reply);
+      isVoiceSubmission = false;
+    }
+
     aiHistory.push({ role: 'assistant', content: result.reply });
     if (aiHistory.length > 6) aiHistory.shift();
 
