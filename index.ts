@@ -88,11 +88,16 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
-    const { prompt, today, tasks = [], recurrences = [], history = [] } = await req.json();
+    const { prompt, today, tasks = [], recurrences = [], history = [], now = null, dateTimeContext = null } = await req.json();
     
     if (typeof prompt !== "string" || !prompt.trim()) {
       return json({ result: { reply: "Désolé, votre demande est vide.", actions: [] } });
     }
+
+    const currentDate = typeof dateTimeContext?.today === "string" ? dateTimeContext.today : today;
+    const currentTime = typeof dateTimeContext?.time === "string" ? dateTimeContext.time : new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const currentDateTime = typeof dateTimeContext?.label === "string" ? dateTimeContext.label : (typeof now === "string" ? now : `${currentDate} ${currentTime}`);
+    const timeZone = typeof dateTimeContext?.timezone === "string" ? dateTimeContext.timezone : "UTC";
 
     // Contexte compact (plafonné) des tâches existantes
     const taskCtx = (Array.isArray(tasks) ? tasks : []).slice(0, 60)
@@ -104,7 +109,10 @@ Deno.serve(async (req) => {
       .join("\n") || "(aucune récurrence)";
 
     const system = `Tu es l'assistant IA de StudySpace, une application de gestion de tâches. Tu réponds en français, tu es concis et sympathique.
-Aujourd'hui : ${today}. Jours : 0=Dimanche, 1=Lundi, 2=Mardi, 3=Mercredi, 4=Jeudi, 5=Vendredi, 6=Samedi.
+Date et heure actuelles : ${currentDateTime}
+Fuseau horaire : ${timeZone}
+Aujourd'hui : ${currentDate}. Jours : 0=Dimanche, 1=Lundi, 2=Mardi, 3=Mercredi, 4=Jeudi, 5=Vendredi, 6=Samedi.
+Important : prends toujours cette date/heure en compte pour interpréter les expressions relatives (demain, ce soir, dans 2 heures, lundi prochain, etc.) et pour situer le contexte de tes actions.
 TÂCHES EXISTANTES DE L'UTILISATEUR :
 ${taskCtx}
 RÉCURRENCES ACTIVES :
