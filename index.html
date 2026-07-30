@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>StudySpace Tasks</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4f46e5">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 :root {
   --p: #1d61e7; --p-hover: #154ec2; --p-soft: #edf3ff;
@@ -78,8 +75,37 @@ h2.big { font-size: 1.5rem; font-weight: 800; color: var(--txt); margin-bottom: 
 .days-picker { display: flex; justify-content: space-between; gap: 4px; margin: 12px 0 20px; }
 .day-circle { width: 42px; height: 42px; border-radius: 50%; background: #edf2f7; color: var(--mut); font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
 .day-circle.on { background: var(--p); color: #fff; box-shadow: 0 4px 12px rgba(29, 97, 231, 0.3); }
-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid #eef2f7; display: flex; justify-content: space-around; padding: 10px 16px max(14px, env(safe-area-inset-bottom)); z-index: 20; }
-.nav-btn { background: none; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--mut); font-size: 0.7rem; font-weight: 700; padding: 6px 16px; border-radius: 16px; transition: all 0.2s; }
+
+/* Calendrier (Style Samsung) */
+.cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.cal-header button { background: var(--card); border: none; box-shadow: var(--shadow); width: 40px; height: 40px; border-radius: 12px; font-size: 1.4rem; font-weight: bold; color: var(--txt); display:flex; align-items:center; justify-content:center; transition: transform 0.2s; }
+.cal-header button:active { transform: scale(0.9); }
+.cal-month-title { font-size: 1.25rem; font-weight: 800; color: var(--txt); text-transform: uppercase; letter-spacing: 1px; }
+.cal-grid-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; margin-bottom: 8px; }
+.cal-day-name { font-size: 0.75rem; font-weight: 800; color: var(--mut); text-transform: uppercase; }
+.cal-day-name:nth-child(6) { color: var(--p); } /* Samedi Bleu */
+.cal-day-name:nth-child(7) { color: var(--red); } /* Dimanche Rouge */
+
+.cal-grid-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-cell { min-height: 85px; display: flex; flex-direction: column; padding: 4px 2px; border-radius: 12px; cursor: pointer; transition: all 0.2s; background: var(--card); border: 2px solid transparent; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.02); overflow: hidden; }
+.cal-cell.empty { visibility: hidden; }
+.cal-cell:active { transform: scale(0.95); }
+.cal-cell-date { text-align: center; font-size: 0.85rem; font-weight: 800; margin-bottom: 4px; color: var(--txt); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; border-radius: 50%; }
+.cal-cell:nth-child(7n+6) .cal-cell-date { color: var(--p); } /* Jours Samedi */
+.cal-cell:nth-child(7n) .cal-cell-date { color: var(--red); } /* Jours Dimanche */
+
+.cal-cell.today .cal-cell-date { background: var(--p); color: #fff; }
+.cal-cell.selected { border-color: var(--mut); background: #f8fafc; } /* Style de sélection Samsung */
+
+.cal-task-list { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.cal-mini-task { font-size: 0.62rem; font-weight: 700; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 4px; border-left: 3px solid transparent; background: #f1f5f9; border-radius: 4px; }
+.cal-mini-task.cat-chores { border-left-color: var(--ok); }
+.cal-mini-task.cat-study { border-left-color: var(--warn); }
+.cal-mini-task.cat-shopping { border-left-color: var(--p); }
+.cal-more { font-size: 0.65rem; color: var(--mut); text-align: center; font-weight: 800; margin-top: 2px; }
+
+nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid #eef2f7; display: flex; justify-content: space-around; padding: 10px 8px max(14px, env(safe-area-inset-bottom)); z-index: 20; }
+.nav-btn { background: none; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--mut); font-size: 0.65rem; font-weight: 700; padding: 6px 12px; border-radius: 16px; transition: all 0.2s; }
 .nav-btn svg { width: 22px; height: 22px; fill: currentColor; }
 .nav-btn.active { color: var(--p); background: var(--p-soft); }
 #fab { position: fixed; right: calc(50% - 240px + 20px); bottom: 90px; width: 60px; height: 60px; border-radius: 50%; background: var(--p); color: #fff; font-size: 2rem; box-shadow: 0 10px 25px rgba(29, 97, 231, 0.4); z-index: 21; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
@@ -178,8 +204,41 @@ nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 
       <div class="sec-title"><h3>À venir</h3><span class="count" id="upcoming-count">0</span></div>
       <div id="upcoming-list"></div>
 
-      <div class="sec-title"><h3>Corvées de la semaine 🗓️</h3><span class="count" id="week-goal">0/0</span></div>
-      <div id="week-list"></div>
+      <!-- Bloc Calendrier Raccourci -->
+      <div class="sec-title"><h3>Planning & Historique</h3></div>
+      <div class="card" id="btn-dash-calendar" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition: all 0.2s;">
+         <div style="display:flex; align-items:center; gap:14px;">
+            <div style="background:var(--p-soft); color:var(--p); width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.4rem;">📅</div>
+            <div>
+               <div style="font-weight:800; color:var(--txt); font-size:1.05rem;">Calendrier complet</div>
+               <div style="font-size:0.85rem; color:var(--mut); margin-top:2px;">Consultez tous vos mois et années</div>
+            </div>
+         </div>
+         <div style="color:var(--p); font-weight:800; font-size:1.4rem;">›</div>
+      </div>
+    </section>
+
+    <!-- Calendrier -->
+    <section id="view-calendar" class="view hidden">
+      <div class="eyebrow">Vue globale</div>
+      <h2 class="big">Calendrier</h2>
+      
+      <div class="cal-header">
+        <button id="cal-prev">‹</button>
+        <div class="cal-month-title" id="cal-month-year">...</div>
+        <button id="cal-next">›</button>
+      </div>
+
+      <div class="cal-grid-header">
+        <div class="cal-day-name">L</div>
+        <div class="cal-day-name">M</div>
+        <div class="cal-day-name">M</div>
+        <div class="cal-day-name">J</div>
+        <div class="cal-day-name">V</div>
+        <div class="cal-day-name">S</div>
+        <div class="cal-day-name">D</div>
+      </div>
+      <div class="cal-grid-days" id="cal-grid-days"></div>
     </section>
 
     <!-- Tâches -->
@@ -248,6 +307,9 @@ nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 
     <button class="nav-btn active" data-view="dashboard">
       <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg> Accueil
     </button>
+    <button class="nav-btn" data-view="calendar">
+      <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg> Calendrier
+    </button>
     <button class="nav-btn" data-view="tasks">
       <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Tâches
     </button>
@@ -258,6 +320,20 @@ nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 
       <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> Profil
     </button>
   </nav>
+</div>
+
+<!-- Modal Détail d'un Jour (Style Samsung) -->
+<div id="modal-day" class="overlay hidden">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h3 id="modal-day-title">Date</h3>
+      <button class="x" id="modal-day-close">✕</button>
+    </div>
+    
+    <div id="modal-day-content"></div>
+    
+    <button id="btn-add-on-day" class="btn btn-p" style="margin-top: 24px; padding: 14px;">+ Ajouter pour ce jour</button>
+  </div>
 </div>
 
 <!-- Modal Ajout / Modification Manuelle -->
@@ -341,7 +417,12 @@ let recUrgent = false;
 
 // Variables IA
 let aiHistory = [];
-let isVoiceSubmission = false; // <-- Permet de savoir si la requête vient du micro
+let isVoiceSubmission = false; 
+
+// Variables Calendrier
+let calCurrentMonth = new Date();
+calCurrentMonth.setDate(1); 
+let calSelectedDate = todayISO();
 
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
@@ -369,6 +450,31 @@ function getRecDays(t) {
 
 const isTemplate = t => getRecDays(t).length > 0;
 const dayTasks = iso => tasks.filter(t => !isTemplate(t) && t.due_date === iso);
+
+function getTasksForDate(isoDate) {
+  const [yy, mm, dd] = isoDate.split('-').map(Number);
+  const localD = new Date(yy, mm - 1, dd);
+  const dow = localD.getDay();
+
+  const dbTasks = tasks.filter(t => !isTemplate(t) && t.due_date === isoDate);
+  const templates = tasks.filter(t => isTemplate(t) && getRecDays(t).includes(dow));
+  
+  const virtualTasks = [];
+  templates.forEach(tpl => {
+    if (!dbTasks.some(dbT => dbT.parent_id === tpl.id)) {
+      virtualTasks.push({
+        ...tpl, 
+        id: 'virtual_' + tpl.id + '_' + isoDate, 
+        due_date: isoDate, 
+        parent_id: tpl.id, 
+        done: false, 
+        isVirtual: true
+      });
+    }
+  });
+  
+  return [...dbTasks, ...virtualTasks].sort((a,b) => (a.due_time || '23:59').localeCompare(b.due_time || '23:59'));
+}
 
 /* ================= AUTHENTIFICATION ================= */
 $('#btn-login').onclick = async () => {
@@ -427,9 +533,9 @@ async function refresh(materialize) {
 function taskHTML(t) {
   const catClass = 'cat-' + (t.category || 'chores');
   let dateInfo = '';
-  if (t.isUpcoming || (t.isWeek && t.due_date !== todayISO())) {
+  if (t.isUpcoming || t.due_date !== todayISO()) {
      const d = new Date(t.due_date); dateInfo = ` • 📅 ${d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })}`;
-  } else if (t.isToday || (t.isWeek && t.due_date === todayISO())) {
+  } else if (t.isToday || t.due_date === todayISO()) {
      dateInfo = ` • 📅 Auj.`;
   }
 
@@ -468,12 +574,6 @@ function renderAll() {
   $('#upcoming-count').textContent = upcoming.length;
   $('#upcoming-list').innerHTML = upcoming.map(t => taskHTML({...t, isUpcoming: true})).join('') || '<div class="empty">Rien de prévu prochainement. ☀️</div>';
 
-  const mon = new Date(); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  const week = tasks.filter(t => !isTemplate(t) && t.category === 'chores' && t.due_date >= localISO(mon) && t.due_date <= localISO(sun));
-  $('#week-goal').textContent = `${week.filter(t => t.done).length}/${week.length}`;
-  $('#week-list').innerHTML = week.map(t => taskHTML({...t, isWeek: true})).join('') || '<div class="empty">Pas de corvée programmée.</div>';
-
   $('#date-line').textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   const active = list.filter(t => !t.done).length;
   $('#tasks-headline').textContent = `Vous avez ${active} tâche${active > 1 ? 's' : ''} aujourd'hui`;
@@ -498,28 +598,171 @@ function renderAll() {
       <button class="del" data-del="${t.id}">🗑</button>
     </div>`
   }).join('') || '<div class="empty">Aucune récurrence active.</div>';
+
+  if (!$('#view-calendar').classList.contains('hidden')) {
+     renderCalendarGrid();
+  }
+  
+  // Rafraîchir le contenu de la modal du jour si elle est ouverte
+  if (!$('#modal-day').classList.contains('hidden')) {
+     const dayTasksList = getTasksForDate(calSelectedDate);
+     $('#modal-day-content').innerHTML = dayTasksList.map(t => taskHTML({...t, isToday: calSelectedDate === todayISO()})).join('') || '<div class="empty">Rien de prévu pour ce jour. 🌴</div>';
+  }
 }
 
+/* ================= CALENDRIER (Style Samsung) ================= */
+function renderCalendarGrid() {
+  const year = calCurrentMonth.getFullYear();
+  const month = calCurrentMonth.getMonth();
+  
+  $('#cal-month-year').textContent = calCurrentMonth.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+  
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  
+  let startDow = firstDay.getDay() - 1; // Lundi = 0
+  if (startDow === -1) startDow = 6; // Dimanche
+  
+  const grid = $('#cal-grid-days');
+  grid.innerHTML = '';
+  
+  for (let i = 0; i < startDow; i++) {
+    grid.innerHTML += `<div class="cal-cell empty"></div>`;
+  }
+  
+  const today = todayISO();
+  
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const iso = localISO(new Date(year, month, d));
+    const isToday = iso === today;
+    const isSelected = iso === calSelectedDate;
+    const dayTasksList = getTasksForDate(iso);
+    
+    const maxDisplay = 3;
+    const toShow = dayTasksList.slice(0, maxDisplay);
+    const remaining = dayTasksList.length - maxDisplay;
+    
+    let tasksHTML = '<div class="cal-task-list">';
+    toShow.forEach(t => {
+       tasksHTML += `<div class="cal-mini-task cat-${t.category}">${esc(t.title)}</div>`;
+    });
+    if (remaining > 0) tasksHTML += `<div class="cal-more">+${remaining}</div>`;
+    tasksHTML += '</div>';
+    
+    grid.innerHTML += `
+      <div class="cal-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-caldate="${iso}">
+         <div class="cal-cell-date">${d}</div>
+         ${tasksHTML}
+      </div>
+    `;
+  }
+}
+
+function openDayModal() {
+  const [yy, mm, dd] = calSelectedDate.split('-').map(Number);
+  const d = new Date(yy, mm - 1, dd);
+  
+  let label = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  if (calSelectedDate === todayISO()) label = "Aujourd'hui";
+  else if (calSelectedDate === tomorrowISO()) label = "Demain";
+  
+  $('#modal-day-title').textContent = label.replace(/^\w/, c => c.toUpperCase());
+  
+  const dayTasksList = getTasksForDate(calSelectedDate);
+  $('#modal-day-content').innerHTML = dayTasksList.map(t => taskHTML({...t, isToday: calSelectedDate === todayISO()})).join('') || '<div class="empty">Rien de prévu pour ce jour. 🌴</div>';
+  
+  $('#modal-day').classList.remove('hidden');
+}
+
+$('#cal-prev').onclick = () => { calCurrentMonth.setMonth(calCurrentMonth.getMonth() - 1); renderCalendarGrid(); };
+$('#cal-next').onclick = () => { calCurrentMonth.setMonth(calCurrentMonth.getMonth() + 1); renderCalendarGrid(); };
+$('#btn-dash-calendar').onclick = () => switchView('calendar');
+
+// Fermeture de la modal Day
+$('#modal-day-close').onclick = () => $('#modal-day').classList.add('hidden');
+$('#modal-day').addEventListener('click', e => { if (e.target.id === 'modal-day') $('#modal-day').classList.add('hidden'); });
+
+$('#btn-add-on-day').onclick = () => {
+   $('#modal-day').classList.add('hidden');
+   openModal(null); // Par défaut le modal ajoutera la tâche sur la date de calSelectedDate (Géré dans openModal)
+};
+
+/* ================= INTERACTIONS ================= */
 document.body.addEventListener('click', async e => {
+  // Sélection d'un jour dans le calendrier
+  const cell = e.target.closest('.cal-cell');
+  if (cell && cell.dataset.caldate) {
+    calSelectedDate = cell.dataset.caldate;
+    renderCalendarGrid(); // Pour surligner la cellule
+    openDayModal();
+    return;
+  }
+
   const tog = e.target.closest('[data-toggle]');
   if (tog) {
-    const t = tasks.find(x => x.id === tog.dataset.toggle);
-    t.done = !t.done; renderAll();
-    const { error } = await sb.from('tasks').update({ done: t.done }).eq('id', t.id);
-    if (error) { t.done = !t.done; renderAll(); toast(error.message); }
+    const id = tog.dataset.toggle;
+    if (id.startsWith('virtual_')) {
+      const parts = id.split('_'); 
+      const tplId = parts[1];
+      const date = parts.slice(2).join('_');
+      const tpl = tasks.find(x => x.id === tplId);
+      if (tpl) {
+        const { error } = await sb.from('tasks').insert({
+          user_id: session.user.id, title: tpl.title, category: tpl.category,
+          urgent: tpl.urgent, due_date: date, due_time: tpl.due_time, parent_id: tpl.id, done: true
+        });
+        if (error) toast(error.message); else refresh(false);
+      }
+      return;
+    }
+    const t = tasks.find(x => x.id === id);
+    if(t) {
+      t.done = !t.done; renderAll();
+      const { error } = await sb.from('tasks').update({ done: t.done }).eq('id', t.id);
+      if (error) { t.done = !t.done; renderAll(); toast(error.message); }
+    }
     return;
   }
   
   const del = e.target.closest('[data-del]');
   if (del) {
-    const { error } = await sb.from('tasks').delete().eq('id', del.dataset.del);
+    const id = del.dataset.del;
+    if (id.startsWith('virtual_')) return toast("Cette tâche récurrente n'a pas encore été générée. Modifiez sa routine globale.");
+    const { error } = await sb.from('tasks').delete().eq('id', id);
     if (error) toast(error.message); else refresh(false);
     return;
   }
 
   const edit = e.target.closest('[data-edit]');
   if (edit && !e.target.closest('button')) {
-    openModal(edit.dataset.edit);
+    const id = edit.dataset.edit;
+    // Si la modal du jour est ouverte, on la referme pour afficher la modal d'édition par dessus proprement
+    if (!$('#modal-day').classList.contains('hidden')) {
+       $('#modal-day').classList.add('hidden');
+    }
+    
+    if (id.startsWith('virtual_')) {
+      const parts = id.split('_');
+      const tplId = parts[1];
+      const date = parts.slice(2).join('_');
+      const tpl = tasks.find(x => x.id === tplId);
+      openModal(null);
+      if (tpl) {
+        $('#task-title').value = tpl.title;
+        $('#task-time').value = tpl.due_time ? tpl.due_time.slice(0,5) : '';
+        modalState.category = tpl.category || 'chores';
+        $$('#cat-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.cat === modalState.category));
+        modalState.urgent = !!tpl.urgent;
+        $('#modal-urgent-chip').classList.toggle('on', modalState.urgent);
+        
+        modalState.day = 'custom';
+        $$('#day-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.day === modalState.day));
+        $('#task-custom-date').value = date;
+        $('#task-custom-date').classList.remove('hidden');
+      }
+    } else {
+      openModal(id);
+    }
   }
 });
 
@@ -527,11 +770,14 @@ function switchView(viewName) {
   $$('.view').forEach(v => v.classList.add('hidden'));
   $('#view-' + viewName).classList.remove('hidden');
   $$('.nav-btn').forEach(x => x.classList.toggle('active', x.dataset.view === viewName));
+  if (viewName === 'calendar') {
+    renderCalendarGrid();
+  }
 }
 $$('.nav-btn').forEach(b => b.onclick = () => switchView(b.dataset.view));
 $('#fab').onclick = () => openModal(null);
 $('#modal-close').onclick = closeModal;
-$('#modal').onclick = e => { if (e.target.id === 'modal') closeModal(); };
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 
 function openModal(taskId = null) {
   editingTaskId = taskId;
@@ -594,11 +840,29 @@ function openModal(taskId = null) {
     $('#modal-routine-days-wrap').classList.add('hidden');
     $('#task-title').value = '';
     $('#task-time').value = '';
-    $('#task-custom-date').value = today;
-    $('#task-custom-date').classList.add('hidden');
-    modalState.category = 'chores'; modalState.day = 'today'; modalState.urgent = false;
+    
+    // Si on ouvre le modal depuis la vue calendrier, on pré-remplit la date sélectionnée
+    let defaultDate = today;
+    if (!$('#view-calendar').classList.contains('hidden') && calSelectedDate) {
+       defaultDate = calSelectedDate;
+    }
+    
+    $('#task-custom-date').value = defaultDate;
+    
+    if (defaultDate === today) {
+       modalState.day = 'today';
+       $('#task-custom-date').classList.add('hidden');
+    } else if (defaultDate === tomorrow) {
+       modalState.day = 'tomorrow';
+       $('#task-custom-date').classList.add('hidden');
+    } else {
+       modalState.day = 'custom';
+       $('#task-custom-date').classList.remove('hidden');
+    }
+    
+    modalState.category = 'chores'; modalState.urgent = false;
     $$('#cat-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.cat === 'chores'));
-    $$('#day-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.day === 'today'));
+    $$('#day-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.day === modalState.day));
     $('#modal-urgent-chip').classList.remove('on');
   }
 }
@@ -681,9 +945,7 @@ $('#btn-add').onclick = async () => {
   closeModal(); refresh(false);
 };
 
-/* =================================================================
-   ASSISTANT IA INTÉGRÉ + VOCAL (CONDITIONNÉ AU MICRO)
-   ================================================================= */
+/* ================= ASSISTANT IA ================= */
 function bubble(text, who, thinking = false) {
   const log = $('#aiLog');
   const d = document.createElement('div');
@@ -774,7 +1036,6 @@ async function executeActions(actions) {
           if (a.recurring_days !== undefined && fields.recurring_days === undefined) fields.recurring_days = a.recurring_days;
           if (a.urgent !== undefined && fields.urgent === undefined) fields.urgent = a.urgent;
 
-          // Nettoyage des jours
           if (fields.recurring_days !== undefined) {
             let rawDays = fields.recurring_days;
             if (typeof rawDays === 'string') {
@@ -796,7 +1057,6 @@ async function executeActions(actions) {
             fields.recurring_days = Array.from(validDays).sort();
           }
 
-          // Nettoyage de l'horaire
           if (fields.due_time !== undefined) {
              if (!fields.due_time || fields.due_time === 'none' || fields.due_time === 'null') {
                 fields.due_time = null;
@@ -832,7 +1092,6 @@ async function executeActions(actions) {
   }
 }
 
-// Synthèse Vocale (Lecture)
 function speakText(text) {
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
@@ -861,12 +1120,6 @@ if ('speechSynthesis' in window) {
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
-// Si l'utilisateur saisit du texte au clavier, réinitialiser l'indicateur vocal
-$('#ai-input').addEventListener('input', () => {
-  isVoiceSubmission = false;
-});
-
-// Reconnaissance Vocale (Micro)
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 let isListening = false;
@@ -917,7 +1170,7 @@ if (SpeechRecognition) {
   recognition.onend = () => {
     stopMic();
     if (input.value.trim().length > 0) {
-      isVoiceSubmission = true; // Demande issue de la dictée vocale
+      isVoiceSubmission = true; 
       $('#btn-ai').click();
     }
   };
@@ -965,7 +1218,6 @@ $('#btn-ai').onclick = async () => {
     const result = data.result;
     bubble(result.reply, 'bot');
     
-    // Vocalisation UNIQUEMENT si la requête a été transmise via le micro
     if (isVoiceSubmission) {
       speakText(result.reply);
       isVoiceSubmission = false;
@@ -986,9 +1238,7 @@ $('#btn-ai').onclick = async () => {
   }
 };
 
-/* =================================================================
-   RÉCURRENCES MANUELLES
-   ================================================================= */
+/* ================= RÉCURRENCES MANUELLES ================= */
 $('#rec-cat-chips').onclick = e => {
   const c = e.target.closest('[data-cat]'); if (!c) return;
   recCategory = c.dataset.cat;
