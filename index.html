@@ -401,6 +401,16 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const localISO = d => d.toLocaleDateString('fr-CA');
 const todayISO = () => localISO(new Date());
 const tomorrowISO = () => { const d = new Date(); d.setDate(d.getDate()+1); return localISO(d); };
+function getNowContext() {
+  const d = new Date();
+  return {
+    now: d.toISOString(),
+    today: localISO(d),
+    time: d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    label: d.toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'medium' }),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  };
+}
 
 const DAYS_SHORT = ['S','M','T','W','T','F','S'];
 const DAYS_FULL = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
@@ -1202,10 +1212,13 @@ $('#btn-ai').onclick = async () => {
   const btn = $('#btn-ai'); btn.disabled = true;
 
   try {
+    const nowCtx = getNowContext();
     const { data, error } = await sb.functions.invoke('groq-assistant', {
       body: {
         prompt: text,
-        today: todayISO(),
+        today: nowCtx.today,
+        now: nowCtx.label,
+        dateTimeContext: nowCtx,
         tasks: getTaskContext(),
         recurrences: getRecContext(),
         history: aiHistory
